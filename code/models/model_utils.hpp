@@ -33,12 +33,18 @@ typename ModelT::Alphabet::sym_t find_sym_from_cum_prob(ModelT const& model, dou
 }
 
 template <typename ModelT>
-std::pair<double,ModelT> entropy_of_model(std::vector<typename ModelT::Alphabet::sym_t> const &syms, ModelT &&model) {
+struct EntropyRun {
+    ModelT model;
+    double H;
+};
+
+template <typename ModelT>
+EntropyRun<ModelT> entropy_of_model(std::vector<typename ModelT::Alphabet::sym_t> const &syms, ModelT &&model) {
     double H = 0.0;
     for (auto const & sym: syms) {
         H += -log2(pmf(model, sym));
         model.learn(sym);
     }
     //std::cout << make_size_string(model);
-    return std::make_pair(H, std::move(model));
+    return EntropyRun<ModelT>{.model=std::move(model), .H=H};
 }

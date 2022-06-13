@@ -25,43 +25,17 @@ void correctness_and_entropy_test(ModelCtorT ctor) {
     for (auto const &gt : contents.bits) {
         assert(ac.decode() == gt);
     }
-    auto [entropy, model] = entropy_of_model(contents.bits, ctor());
-    std::cout << "Entropy: " << entropy << std::endl;
-    std::cout << "Size: " << model.footprint().mib() << "MiB" << std::endl;
+    auto res = entropy_of_model(contents.bits, ctor());
+    std::cout << "Entropy: " << res.H << std::endl;
+    std::cout << "Size: " << res.model.footprint().mib() << "MiB" << std::endl;
 }
 
 int main() {
     limit_gb(3);
-    auto dmax{9};
-    // auto contents = load_file_in_memory(cantbry_name_to_path.at("xargs.1"));
-    // auto [H, model] = entropy_of_model(contents.bytes, VolfModel<ByteAlphabet>(9, 15.0));
-    // std::cout << H << " " << make_size_string(model) << std::endl;
     correctness_and_entropy_test([]() {
         return VolfModel<BitAlphabet>(10, 15.0);
     });
     correctness_and_entropy_test([]() {
         return HashModel<BitAlphabet>(1000, 10);
     });
-    // for (auto const &name: calgary_names) {
-    //     auto contents = load_file_in_memory(calgary_name_to_path.at(name));
-    //     std::cout << name << " ";
-    // }
-    // std::cout << "File,Alphabet,Depth,Entropy" << std::endl;
-    // for (auto const & name: calgary_names) {
-    //     auto const path = calgary_name_to_path.at(name);
-    //     auto contents = load_file_in_memory(path);
-    //     for (int depth = 1; depth < dmax; ++depth) {
-    //         std::cout << name << ",Bit," << depth << ","
-    //                   << std::setprecision(7)
-    //                   << entropy_of_model(contents.bits, VolfModel<BitAlphabet>(depth, 15.0))
-    //                   << std::endl;
-    //     }
-    //     for (int depth = 1; depth < dmax; ++depth) {
-    //         std::cout << name << ",Byte," << depth << ","
-    //                   << std::setprecision(7)
-    //                   << entropy_of_model(contents.bytes, VolfModel<ByteAlphabet>(depth, 15.0))
-    //                   << std::endl;
-    //     }
-    // }
-
 }

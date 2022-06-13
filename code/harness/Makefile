@@ -18,10 +18,14 @@ ROOT_IN_QUOTES=$(addprefix '",$(addsuffix "',$(ROOT)))
 INC=$(addprefix -I$(ROOT)/,$(INC_DIRS))
 HEADERS=$(addprefix $(ROOT)/,$(HEADER_FILES))
 
-CPPFLAGS=-std=c++17 -g $(INC) -DROOT_PATH=$(ROOT_IN_QUOTES)
+CPPFLAGS=-std=c++17 -O3 -g $(INC) -DROOT_PATH=$(ROOT_IN_QUOTES)
 
 
-all: correctness
-	./correctness
+# all: correctness
+# 	./correctness
+all: calgary
+	./calgary
 correctness: correctness.cpp
+	g++ $(CPPFLAGS) $< -o $@
+calgary: calgary.cpp
 	g++ $(CPPFLAGS) $< -o $@
