@@ -1,13 +1,13 @@
-CORPORA=data/cantrbry data/enwik8 data/shakespeare data/calgary
+CORPORA=cantrbry enwik8 shakespeare calgary
 
 all: $(CORPORA)
 
 
-data/cantrbry: | data
+cantrbry:
 	mkdir -p $@
 	wget -qO- http://corpus.canterbury.ac.nz/resources/cantrbry.tar.gz | tar xz -C $@
 
-data/enwik8: | data
+enwik8:
 	mkdir -p $@
 	cd $@ && \
 	wget -q https://data.deepai.org/enwik8.zip && \
@@ -15,15 +15,12 @@ data/enwik8: | data
 	rm enwik8.zip
 
 # Note, we trim out the gutenburg prologue+epilogue legalese
-data/shakespeare: | data
+shakespeare:
 	mkdir -p $@
 	cd $@ && \
 	wget -qO- https://www.gutenberg.org/files/100/100-0.txt |\
 	sed -n '85,170287p;170288q' > shakespeare
 
-data/calgary: | data
+calgary:
 	mkdir -p $@
 	wget -qO- http://corpus.canterbury.ac.nz/resources/calgary.tar.gz | tar xz -C $@
-
-data:
-	mkdir $@
