@@ -1,4 +1,5 @@
 ROOT=..
+OPTFLAGS=-O3 -march=native
 INC_DIRS= corpus utils coding/ac models
 HEADER_FILES=\
 	corpus/corpus.hpp \
@@ -18,13 +19,13 @@ ROOT_IN_QUOTES=$(addprefix '",$(addsuffix "',$(ROOT)))
 INC=$(addprefix -I$(ROOT)/,$(INC_DIRS))
 HEADERS=$(addprefix $(ROOT)/,$(HEADER_FILES))
 
-CPPFLAGS=-std=c++17 -O3 -g $(INC) -DROOT_PATH=$(ROOT_IN_QUOTES)
+CPPFLAGS=-std=c++17 $(OPTFLAGS) -pthread -lpthread -g $(INC) -DROOT_PATH=$(ROOT_IN_QUOTES)
 
 
 # all: correctness
 # 	./correctness
 all: calgary
-	./calgary
+	time ./calgary
 correctness: correctness.cpp
 	g++ $(CPPFLAGS) $< -o $@
 calgary: calgary.cpp

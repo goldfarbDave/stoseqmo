@@ -10,6 +10,7 @@
 #include "hashing.hpp"
 #include "volfctw.hpp"
 
+#include "threadpool.hpp"
 struct LineItem {
     std::string fn;
     std::string mn;
@@ -25,35 +26,56 @@ struct LineItem {
         return ss.str();
     }
 };
-
+constexpr auto DEPTH = 8;
+LineItem do_ctw(std::vector<byte_t> const &bytes, std::string const &name) {
+    auto res = entropy_of_model(bytes, VolfModel<ByteAlphabet>(DEPTH, 15.0));
+    LineItem ctw_li{.fn=name,
+                    .mn="CTW",
+                    .fs=bytes.size(),
+                    .ms=res.model.footprint(),
+                    .entropy=res.H,
+    };
+    return ctw_li;
+}
+LineItem do_hash(std::vector<byte_t> const &bytes, std::string const& name, int log_tab_size) {
+    auto res = entropy_of_model(bytes, HashModel<ByteAlphabet>(1<<log_tab_size, DEPTH));
+    std::ostringstream ss;
+    ss << "Hash" << (1<<log_tab_size);
+    LineItem hm_li{.fn = name,
+                   .mn=ss.str(),
+                   .fs=bytes.size(),
+                   .ms=res.model.footprint(),
+                   .entropy=res.H
+    };
+    return hm_li;
+}
 int main() {
-    limit_gb(3);
-    auto depth{8};
+    // limit_gb(5);
     std::cout << LineItem{}.header() << std::endl;
+    Threadpool tp(8);
+    std::vector<std::packaged_task<LineItem()>> stvec;
     for (auto const & name: calgary_names) {
-        auto const path = calgary_name_to_path.at(name);
-        auto const contents = load_file_in_memory(path);
-        auto res = entropy_of_model(contents.bytes, VolfModel<ByteAlphabet>(depth, 15.0));
-        LineItem ctw_li{
-            .fn=name,
-                .mn="CTW",
-                .fs=contents.bytes.size(),
-                .ms=res.model.footprint(),
-                .entropy=res.H,
+        auto ctwfunc = [name]() {
+            auto const path = calgary_name_to_path.at(name);
+            auto const contents = load_file_in_memory(path);
+            return do_ctw(contents.bytes, name);
         };
-        std::cout << ctw_li.line() << std::endl;
-        for (int i = 7; i < 21; ++i) {
-            auto res = entropy_of_model(contents.bytes, HashModel<ByteAlphabet>(1<<i, depth));
-            std::ostringstream ss;
-            ss << "Hash" << (1<<i);
-            LineItem hm_li{
-                .fn = name,
-                .mn=ss.str(),
-                .fs=contents.bytes.size(),
-                .ms=res.model.footprint(),
-                .entropy=res.H
-            };
-            std::cout << hm_li.line() << std::endl;
+        auto hfunc = [name](int i) {
+            auto const path = calgary_name_to_path.at(name);
+            auto const contents = load_file_in_memory(path);
+            return do_hash(contents.bytes, name, i);
+        };
+        stvec.emplace_back([ctwfunc](){return ctwfunc();});
+        for (int i =7; i < 21; ++i) {
+            stvec.emplace_back([hfunc, i](){return hfunc(i);});
         }
+    }
+    std::vector<std::future<LineItem>> futvec;
+    for (auto &st: stvec) {
+        futvec.push_back(tp.add_task<LineItem>(st));
+    }
+    for (auto &f: futvec) {
+        f.wait();
+        std::cout << f.get().line() << std::endl;
     }
 }
