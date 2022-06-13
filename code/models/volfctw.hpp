@@ -1,15 +1,13 @@
+// Adapted from https://github.com/omerktz/VMMPredictor/blob/master/vmms/vmm/vmm/algs/ctw/VolfNode.java
+#pragma once
 #include <algorithm>
-#include <cmath>
-#include <iostream>
 #include <limits>
 #include <memory>
 #include <numeric>
 #include <utility>
-#include <vector>
-#include <iomanip>
-#include "corpus.hpp"
-#include "utils.hpp"
 
+#include "model_ctx.hpp"
+#include "model_mem.hpp"
 
 //template <typename> struct Typedebug;
 template <std::size_t num_children>
@@ -109,7 +107,7 @@ class VolfNode {
         }
     }
 public:
-    static std::size_t num_created;
+    static inline std::size_t num_created;
     VolfNode(double alpha) : m_alpha{alpha} {++num_created;}
     ProbAr get_probs(IdxContext const &ctx) const {
         if (!ctx) {
@@ -146,23 +144,23 @@ public:
         return pv;
     }
 };
-// Give space for statics here.
-template<std::size_t N>
-std::size_t VolfNode<N>::num_created;
 
 
-template <typename Alphabet>
+
+template <typename AlphabetT>
 class VolfModel {
+public:
+    using Alphabet= AlphabetT;
+private:
     // Standard K-Ary implementation discussed as "Solution 1"
     using idx_t = std::size_t;
-
+    using sym_t = typename Alphabet::sym_t;
     MemoryDeque<idx_t> m_past_idxs;
     VolfNode<Alphabet::size> m_root;
+public:
     auto get_probs() const{
         return m_root.get_probs(m_past_idxs.view());
     }
-public:
-    using sym_t = typename Alphabet::dtype;
     VolfModel(size_t depth, double alpha)
         : m_past_idxs{depth}
         , m_root{alpha}
@@ -179,65 +177,4 @@ public:
         m_root.learn(view, idx);
         m_past_idxs.push_back(idx);
     }
-    double pmf(sym_t sym) const {
-        auto idx = Alphabet::to_idx(sym);
-        return get_probs()[idx];
-    }
-    double excmf(sym_t sym) const {
-        auto probar = get_probs();
-        auto cmf = std::accumulate(probar.begin(),
-                                   probar.begin()+Alphabet::to_idx(sym),
-                                   0.0);
-        return cmf;
-    }
-    sym_t find_sym_from_cum_prob(double cum_prob) const {
-        auto probar = get_probs();
-        auto pos = std::find_if(probar.begin(), probar.end(),
-                                [&cum_prob](auto const& prob) {
-                                    if (cum_prob < prob) {
-                                        return true;
-                                    }
-                                    cum_prob -= prob;
-                                    return false;
-                                });
-        return Alphabet::to_sym(std::distance(probar.begin(), pos));
-    }
 };
-
-#include <sys/resource.h>
-#include "ac.hpp"
-int main() {
-    // 3GB limit
-    auto tgb = (1ul<<30)*3;
-    struct rlimit limit{tgb, tgb};
-    if (-1 == setrlimit(RLIMIT_DATA, &limit)) {
-        std::cerr << "Failed to set mem safety" << "\n";
-        return -1;
-    }
-    auto dmax{9};
-    correctness_and_entropy_test([]() {
-        return VolfModel<BitAlphabet>(10, 15.0);
-    });
-    // for (auto const &name: calgary_names) {
-    //     auto contents = load_file_in_memory(calgary_name_to_path.at(name));
-    //     std::cout << name << " ";
-    // }
-    // std::cout << "File,Alphabet,Depth,Entropy" << std::endl;
-    // for (auto const & name: calgary_names) {
-    //     auto const path = calgary_name_to_path.at(name);
-    //     auto contents = load_file_in_memory(path);
-    //     for (int depth = 1; depth < dmax; ++depth) {
-    //         std::cout << name << ",Bit," << depth << ","
-    //                   << std::setprecision(7)
-    //                   << entropy_of_model(contents.bits, VolfModel<BitAlphabet>(depth, 15.0))
-    //                   << std::endl;
-    //     }
-    //     for (int depth = 1; depth < dmax; ++depth) {
-    //         std::cout << name << ",Byte," << depth << ","
-    //                   << std::setprecision(7)
-    //                   << entropy_of_model(contents.bytes, VolfModel<ByteAlphabet>(depth, 15.0))
-    //                   << std::endl;
-    //     }
-    // }
-
-}

@@ -1,12 +1,10 @@
+#pragma once
 #include <algorithm>
-#include <iostream>
-#include <vector>
+#include <functional>
 #include <numeric>
-#include <utility>
-#include <iomanip>
-#include "utils.hpp"
-#include "corpus.hpp"
-
+#include <vector>
+#include "model_ctx.hpp"
+#include "model_mem.hpp"
 // Boost's impl
 template <class T>
 inline void hash_combine(std::size_t& seed, const T& v) {
@@ -190,20 +188,26 @@ public:
 //     };
 // }
 // Hashing ideas: FNV, pearson
-template <typename Alphabet>
+template <typename AlphabetT>
 class HashModel {
 public:
-    using sym_t = typename Alphabet::dtype;
+    using Alphabet = AlphabetT;
 private:
     using count_t = std::size_t;
     using idx_t = std::size_t;
+    using sym_t = typename Alphabet::sym_t;
     using histogram_t = Histogram<count_t, Alphabet::size>;
     MemoryDeque<idx_t> m_past_idxs;
     ContextHashTable<idx_t, histogram_t> m_hashtable;
+
+public:
     auto get_probs() const {
         return m_hashtable.get_probs(m_past_idxs.view());
     }
-public:
+    Footprint footprint() const {
+        return Footprint{.num_nodes=m_hashtable.size(),
+                         .node_size=sizeof(histogram_t)};
+    }
     HashModel (std::size_t num_entries, std::size_t depth) : m_past_idxs{depth}, m_hashtable{num_entries} {}
     void learn(sym_t sym) {
         auto idx = Alphabet::to_idx(sym);
@@ -211,60 +215,4 @@ public:
         m_hashtable.learn(view, idx);
         m_past_idxs.push_back(idx);
     }
-
-    double pmf(sym_t sym) const {
-        auto idx = Alphabet::to_idx(sym);
-        auto view = m_past_idxs.view();
-        return get_probs()[idx];
-    }
-    double excmf(sym_t sym) const {
-        auto probar = get_probs();
-        auto cmf = std::accumulate(probar.begin(),
-                                   probar.begin()+Alphabet::to_idx(sym),
-                                   0.0);
-        return cmf;
-    }
-    sym_t find_sym_from_cum_prob(double cum_prob) const {
-        auto probar = get_probs();
-        auto pos = std::find_if(probar.begin(), probar.end(),
-                                [&cum_prob](auto const& prob) {
-                                    if (cum_prob < prob) {
-                                        return true;
-                                    }
-                                    cum_prob -= prob;
-                                    return false;
-                                });
-        return Alphabet::to_sym(std::distance(probar.begin(), pos));
-    }
-
-
 };
-#include <sys/resource.h>
-#include "ac.hpp"
-int main() {
-    // 3GB limit
-    auto tgb = (1ul<<30)*3;
-    struct rlimit limit{tgb, tgb};
-    if (-1 == setrlimit(RLIMIT_DATA, &limit)) {
-        std::cerr << "Failed to set mem safety" << "\n";
-        return -1;
-    }
-    correctness_and_entropy_test([]() {
-        return HashModel<BitAlphabet>(1<<21, 10);
-    });
-    // auto tsmax{1<<21};
-    // auto dmax{10};
-    // std::cout << "File,Alphabet,TS,Depth,Entropy" << std::endl;
-    // for (auto const & name: cantbry_names) {
-    //     auto const path = cantbry_name_to_path.at(name);
-    //     auto contents = load_file_in_memory(path);
-    //     for (int ts = 128; ts < tsmax; ts <<= 1) {
-    //         for (int depth = 1; depth < dmax; ++depth) {
-    //             std::cout << name << ",Byte," << ts << "," << depth << ","
-    //                       << std::setprecision(7)
-    //                       << entropy_of_model(contents.bytes, HashModel<ByteAlphabet>(ts, depth))
-    //                       << std::endl;
-    //         }
-    //     }
-    // }
-}

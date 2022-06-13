@@ -1,11 +1,7 @@
 #pragma once
-#include "utils.hpp"
-#include "corpus.hpp"
+#include "data_types.hpp"
 
-using BitVec = std::vector<bit_t>;
-bit_t flipbit(bit_t bit) {
-    return bit == bit_t::ONE ? bit_t::ZERO : bit_t::ONE;
-}
+
 constexpr std::size_t PREC{64};
 constexpr std::size_t WHOLEB{PREC-2};
 constexpr std::size_t Q1B{1UL << (WHOLEB - 2)};
@@ -135,11 +131,11 @@ public:
         return std::move(m_outbits);
     }
     template <typename ModelT>
-    typename ModelT::sym_t decode(ModelT const &model) {
+    typename ModelT::Alphabet::sym_t decode(ModelT const &model) {
         auto target = m_waiting - m_L;
-        auto ret = model.find_sym_from_cum_prob(inv_scale_prob(target));
-        narrow_region(ScaledProbs{.excmf=scale_prob(model.excmf(ret)),
-                                  .pmf=scale_prob(model.pmf(ret))});
+        auto ret = find_sym_from_cum_prob(model, inv_scale_prob(target));
+        narrow_region(ScaledProbs{.excmf=scale_prob(excmf(model, ret)),
+                                  .pmf=scale_prob(pmf(model, ret))});
         discard_bits();
         return ret;
     }
@@ -150,16 +146,16 @@ class StreamingACEnc {
     ModelT m_model;
     BitVec &m_bv;
     ArithmeticCoder m_ac;
-    using sym_t = typename ModelT::sym_t;
 public:
+    using sym_t = typename ModelT::Alphabet::sym_t;
     StreamingACEnc(BitVec &bv, ModelT&& model)
         : m_model{std::forward<ModelT>(model)}
         , m_bv{bv}
         , m_ac{bv} {}
     void encode(sym_t const &sym) {
         ArithmeticCoder::Probs probs{
-            .excmf = m_model.excmf(sym),
-            .pmf = m_model.pmf(sym),
+            .excmf = excmf(m_model, sym),
+            .pmf = pmf(m_model, sym),
         };
         m_ac.encode(probs);
         m_model.learn(sym);
@@ -174,7 +170,7 @@ class StreamingACDec {
     BitVec m_bv;
     ArithmeticCoder m_ac;
 public:
-    using sym_t = typename ModelT::sym_t;
+    using sym_t = typename ModelT::Alphabet::sym_t;
     StreamingACDec(BitVec &&bv, ModelT &&model)
         : m_model{std::forward<ModelT>(model)}
         , m_bv{std::move(bv)}
@@ -185,21 +181,3 @@ public:
         return sym;
     }
 };
-
-template <typename ModelCtorT>
-void correctness_and_entropy_test(ModelCtorT ctor) {
-    auto contents = load_file_in_memory(cantbry_name_to_path.at("fields.c"));
-    BitVec compressed;
-    {
-        StreamingACEnc ac(compressed, ctor());
-        for (auto const &sym: contents.bits) {
-            ac.encode(sym);
-        }
-    }
-    std::cout << "Compression: " << contents.bits.size() << " -> " <<compressed.size() << std::endl;
-    StreamingACDec ac(std::move(compressed), ctor());
-    for (auto const &gt : contents.bits) {
-        assert(ac.decode() == gt);
-    }
-    std::cout << "Entropy: " << entropy_of_model(contents.bits, ctor());
-}
