@@ -25,7 +25,7 @@ CPPFLAGS=-std=c++17 $(OPTFLAGS) -pthread -lpthread -g $(INC) -DROOT_PATH=$(ROOT_
 # all: correctness
 # 	./correctness
 all: calgary
-	time ./calgary
+	./calgary | time tee calgary.csv
 correctness: correctness.cpp
 	g++ $(CPPFLAGS) $< -o $@
 calgary: calgary.cpp

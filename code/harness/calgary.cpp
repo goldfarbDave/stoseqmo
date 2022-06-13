@@ -22,7 +22,9 @@ struct LineItem {
     }
     std::string line() const {
         std::ostringstream ss;
-        ss << fn << "," << mn << "," << fs << "," << ms.num_nodes << "," << std::setprecision(7) << entropy;
+        ss << fn << "," << mn << "," << fs << "," << ms.num_nodes << ","
+           << std::setprecision(7)
+           << entropy;
         return ss.str();
     }
 };
@@ -52,7 +54,8 @@ LineItem do_hash(std::vector<byte_t> const &bytes, std::string const& name, int 
 int main() {
     // limit_gb(5);
     std::cout << LineItem{}.header() << std::endl;
-    Threadpool tp(8);
+    Threadpool tp(4);
+
     std::vector<std::packaged_task<LineItem()>> stvec;
     for (auto const & name: calgary_names) {
         auto ctwfunc = [name]() {
@@ -66,10 +69,11 @@ int main() {
             return do_hash(contents.bytes, name, i);
         };
         stvec.emplace_back([ctwfunc](){return ctwfunc();});
-        for (int i =7; i < 21; ++i) {
+        for (int i =7; i < 19; ++i) {
             stvec.emplace_back([hfunc, i](){return hfunc(i);});
         }
     }
+
     std::vector<std::future<LineItem>> futvec;
     for (auto &st: stvec) {
         futvec.push_back(tp.add_task<LineItem>(st));
