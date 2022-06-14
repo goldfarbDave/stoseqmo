@@ -1,7 +1,6 @@
 #include <iostream>
 #include <sstream>
 #include <iomanip>
-#include "limit_mem.hpp"
 
 #include "corpus.hpp"
 #include "model_utils.hpp"
@@ -22,12 +21,12 @@ struct LineItem {
     std::string line() const {
         std::ostringstream ss;
         ss << fn << "," << mn << "," << fs << "," << ms.num_nodes << ","
-           << std::setprecision(7)
+           << std::setprecision(15)
            << entropy;
         return ss.str();
     }
 };
-constexpr auto DEPTH = 8;
+constexpr auto DEPTH = 6;
 LineItem do_ctw(std::vector<byte_t> const &bytes, std::string const &name) {
     auto res = entropy_of_model(bytes, VolfModel<ByteAlphabet>(DEPTH, 15.0));
     LineItem ctw_li{.fn=name,
@@ -51,29 +50,25 @@ LineItem do_hash(std::vector<byte_t> const &bytes, std::string const& name, int 
     return hm_li;
 }
 int main() {
-    // limit_gb(5);
     std::cout << LineItem{}.header() << std::endl;
-    Threadpool tp(4);
 
     std::vector<std::packaged_task<LineItem()>> stvec;
-    for (auto const & name: calgary_names) {
-        auto ctwfunc = [name]() {
-            auto const path = calgary_name_to_path.at(name);
-            auto const contents = load_file_in_memory(path);
-            return do_ctw(contents.bytes, name);
-        };
-        auto hfunc = [name](int i) {
-            auto const path = calgary_name_to_path.at(name);
-            auto const contents = load_file_in_memory(path);
-            return do_hash(contents.bytes, name, i);
-        };
-        stvec.emplace_back([ctwfunc](){return ctwfunc();});
-        for (int i =7; i < 19; ++i) {
-            stvec.emplace_back([hfunc, i](){return hfunc(i);});
-        }
+    auto contents = load_shakespeare();
+    auto name = "shakespeare";
+    auto ctwfunc = [name, contents]() {
+        return do_ctw(contents.bytes, name);
+    };
+    auto hfunc = [name, contents](int i) {
+        return do_hash(contents.bytes, name, i);
+    };
+    stvec.emplace_back([ctwfunc](){return ctwfunc();});
+    for (int i =7; i < 19; ++i) {
+        stvec.emplace_back([hfunc, i](){return hfunc(i);});
     }
 
+
     std::vector<std::future<LineItem>> futvec;
+    Threadpool tp(4);
     for (auto &st: stvec) {
         futvec.push_back(tp.add_task<LineItem>(st));
     }

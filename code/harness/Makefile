@@ -24,8 +24,14 @@ CPPFLAGS=-std=c++17 $(OPTFLAGS) -pthread -lpthread -g $(INC) -DROOT_PATH=$(ROOT_
 
 # all: correctness
 # 	./correctness
-all: calgary
-	./calgary | time tee calgary.csv
+# all: calgary
+# 	./calgary | time tee calgary.csv
+all: shakespeare
+	./shakespeare | time tee shakespeare.csv
+
+
+shakespeare: shakespeare.cpp
+	g++ $(CPPFLAGS) $< -o $@
 correctness: correctness.cpp
 	g++ $(CPPFLAGS) $< -o $@
 calgary: calgary.cpp

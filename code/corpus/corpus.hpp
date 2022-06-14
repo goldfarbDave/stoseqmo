@@ -5,6 +5,9 @@
 #include <sstream>
 #include <string>
 #include <vector>
+
+#include "data_types.hpp"
+
 std::vector<byte_t> open_file_as_bytes(std::string path) {
     std::ifstream stream(path, std::ios::in | std::ios::binary);
     if (stream.fail()) {
@@ -31,6 +34,11 @@ MemoryContents load_file_in_memory(std::string path ) {
     auto bytes = open_file_as_bytes(path);
     auto bits = bytevec_to_bitvec(bytes);
     return MemoryContents{bytes, bits};
+}
+
+MemoryContents load_shakespeare() {
+    auto path = ROOT_PATH"/data/shakespeare/shakespeare";
+    return load_file_in_memory(path);
 }
 
 const std::map<std::string, std::string> cantbry_name_to_path = {
