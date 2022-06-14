@@ -48,6 +48,18 @@ LineItem do_hash(std::vector<byte_t> const &bytes, std::string const& name, int 
     };
     return hm_li;
 }
+LineItem do_amnesia_ctw(std::vector<byte_t> const &bytes, std::string const& name, int tab_size) {
+    auto res = entropy_of_model(bytes, AmnesiaVolfModel<ByteAlphabet>(DEPTH, 15.0, tab_size));
+    std::ostringstream ss;
+    LineItem hm_li{.fn = name,
+                   .mn="AmnesiaCTW",
+                   .fs=bytes.size(),
+                   .ms=res.model.footprint(),
+                   .entropy=res.H
+    };
+    return hm_li;
+}
+
 int main() {
     std::cout << LineItem{}.header() << std::endl;
 
@@ -60,10 +72,16 @@ int main() {
     auto hfunc = [name, contents](int i) {
         return do_hash(contents.bytes, name, i);
     };
-    stvec.emplace_back([ctwfunc](){return ctwfunc();});
-    for (int i =7; i < 22; ++i) {
-        stvec.emplace_back([hfunc, i](){return hfunc(1<<i);});
-    }
+    auto amnfunc = [name, contents](int i) {
+        return do_amnesia_ctw(contents.bytes, name, i);
+    };
+    // stvec.emplace_back([ctwfunc](){return ctwfunc();});
+    // for (int i =7; i < 22; ++i) {
+    //     stvec.emplace_back([hfunc, i](){return hfunc(1<<i);});
+    // }
+    // for (int i = 9; i< 20; ++i ) {
+    //     stvec.emplace_back([amnfunc, i](){return amnfunc(1<<i);});
+    // }
     // Generated int(nplinspace)
     // std::vector<int> tsizes = {524288, 699050, 873813, 1048576, 1223338, 1398101, 1572864, 1747626, 1922389, 2097152};
     // for (auto const& tsize: tsizes) {

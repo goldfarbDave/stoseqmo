@@ -178,3 +178,50 @@ public:
         m_past_idxs.push_back(idx);
     }
 };
+
+
+template <typename AlphabetT>
+class AmnesiaVolfModel {
+public:
+    using Alphabet= AlphabetT;
+private:
+    // Standard K-Ary implementation discussed as "Solution 1"
+    using idx_t = std::size_t;
+    using sym_t = typename Alphabet::sym_t;
+    using Node = VolfNode<Alphabet::size>;
+    MemoryDeque<idx_t> m_past_idxs;
+    Node m_root;
+    std::size_t m_max_size;
+    double m_alpha;
+public:
+    auto get_probs() const{
+        return m_root.get_probs(m_past_idxs.view());
+    }
+    AmnesiaVolfModel(size_t depth, double alpha, std::size_t max_size)
+        : m_past_idxs{depth}
+        , m_root{alpha}
+        , m_max_size{max_size}
+        , m_alpha{alpha}
+        {
+            Node::num_created = 0;
+        }
+    Footprint footprint() const {
+        return {.num_nodes = m_max_size,
+                .node_size = sizeof(Node)};
+    }
+    void learn(sym_t sym) {
+        auto idx = Alphabet::to_idx(sym);
+        auto view = m_past_idxs.view();
+        m_root.learn(view, idx);
+        m_past_idxs.push_back(idx);
+        // Forget!
+        if (Node::num_created > m_max_size) {
+            Node::num_created=0;
+            // Let's still keep our context
+            //m_past_idxs.clear();
+            m_root = Node(m_alpha);
+            learn(sym);
+        }
+
+    }
+};
