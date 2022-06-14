@@ -37,12 +37,11 @@ LineItem do_ctw(std::vector<byte_t> const &bytes, std::string const &name) {
     };
     return ctw_li;
 }
-LineItem do_hash(std::vector<byte_t> const &bytes, std::string const& name, int log_tab_size) {
-    auto res = entropy_of_model(bytes, HashModel<ByteAlphabet>(1<<log_tab_size, DEPTH));
+LineItem do_hash(std::vector<byte_t> const &bytes, std::string const& name, int tab_size) {
+    auto res = entropy_of_model(bytes, HashModel<ByteAlphabet>(tab_size, DEPTH));
     std::ostringstream ss;
-    ss << "Hash" << (1<<log_tab_size);
     LineItem hm_li{.fn = name,
-                   .mn=ss.str(),
+                   .mn="Hash",
                    .fs=bytes.size(),
                    .ms=res.model.footprint(),
                    .entropy=res.H
@@ -62,13 +61,17 @@ int main() {
         return do_hash(contents.bytes, name, i);
     };
     stvec.emplace_back([ctwfunc](){return ctwfunc();});
-    for (int i =7; i < 19; ++i) {
-        stvec.emplace_back([hfunc, i](){return hfunc(i);});
+    for (int i =7; i < 22; ++i) {
+        stvec.emplace_back([hfunc, i](){return hfunc(1<<i);});
     }
-
+    // Generated int(nplinspace)
+    // std::vector<int> tsizes = {524288, 699050, 873813, 1048576, 1223338, 1398101, 1572864, 1747626, 1922389, 2097152};
+    // for (auto const& tsize: tsizes) {
+    //     stvec.emplace_back([hfunc, tsize](){return hfunc(tsize);});
+    // }
 
     std::vector<std::future<LineItem>> futvec;
-    Threadpool tp(4);
+    Threadpool tp(1);
     for (auto &st: stvec) {
         futvec.push_back(tp.add_task<LineItem>(st));
     }
