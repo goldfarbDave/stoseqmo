@@ -22,12 +22,12 @@ HEADERS=$(addprefix $(ROOT)/,$(HEADER_FILES))
 CPPFLAGS=-std=c++17 $(OPTFLAGS) -pthread -lpthread -g $(INC) -DROOT_PATH=$(ROOT_IN_QUOTES)
 
 
-# all: correctness
-# 	./correctness
+all: correctness
+	./correctness
 # all: calgary
 # 	./calgary | time tee calgary.csv
-all: shakespeare
-	./shakespeare | time tee shakespeare.csv
+# all: shakespeare
+# 	./shakespeare | time tee shakespeare.csv
 
 
 shakespeare: shakespeare.cpp

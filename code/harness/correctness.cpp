@@ -33,9 +33,9 @@ void correctness_and_entropy_test(ModelCtorT ctor) {
 int main() {
     limit_gb(3);
     correctness_and_entropy_test([]() {
-        return VolfModel<BitAlphabet>(10, 15.0);
+        return VolfModel<BitAlphabet>(100, 15.0);
     });
-    correctness_and_entropy_test([]() {
-        return HashModel<BitAlphabet>(1000, 10);
-    });
+    // correctness_and_entropy_test([]() {
+    //     return HashModel<BitAlphabet>(1000, 10);
+    // });
 }
