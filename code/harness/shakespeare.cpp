@@ -41,7 +41,7 @@ LineItem do_hash(std::vector<byte_t> const &bytes, std::string const& name, int 
     auto res = entropy_of_model(bytes, HashModel<ByteAlphabet>(tab_size, DEPTH));
     std::ostringstream ss;
     LineItem hm_li{.fn = name,
-                   .mn="Hash",
+                   .mn="HashCTW",
                    .fs=bytes.size(),
                    .ms=res.model.footprint(),
                    .entropy=res.H

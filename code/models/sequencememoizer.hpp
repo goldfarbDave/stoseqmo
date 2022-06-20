@@ -60,7 +60,6 @@ struct SMData {
         m_ctot += 1;
         auto const RESCALE_THRESHOLD = std::numeric_limits<uint8_t>::max();
         if (m_cs[sym] == RESCALE_THRESHOLD) {
-            std::cout << "RESCALE" << std::endl;
             auto new_total = 0;
             std::transform(m_cs.begin(), m_cs.end(), m_cs.begin(),
                            [this, &new_total](auto const &el) {
@@ -209,6 +208,7 @@ class SMNode {
         if (ctx && m_children[ctx.back()]) {
             return get_child(ctx.back()).get_probs_rec(ctx.popped(), weight_probs(parent_probs));
         }
+
         // This captures
         return weight_probs(parent_probs);
     }
@@ -218,7 +218,6 @@ class SMNode {
         m_ctot += 1;
         auto const RESCALE_THRESHOLD = std::numeric_limits<uint8_t>::max();
         if (m_cs[sym] == RESCALE_THRESHOLD) {
-            std::cout << "RESCALE" << std::endl;
             auto new_total = 0;
             std::transform(m_cs.begin(), m_cs.end(), m_cs.begin(),
                            [this, &new_total](auto const &el) {

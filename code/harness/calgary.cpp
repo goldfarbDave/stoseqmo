@@ -8,6 +8,7 @@
 
 #include "hashing.hpp"
 #include "volfctw.hpp"
+#include "sequencememoizer.hpp"
 
 #include "threadpool.hpp"
 struct LineItem {
@@ -41,7 +42,7 @@ LineItem do_ctw(std::vector<byte_t> const &bytes, std::string const &name) {
 LineItem do_hash(std::vector<byte_t> const &bytes, std::string const& name, int log_tab_size) {
     auto res = entropy_of_model(bytes, HashModel<ByteAlphabet>(1<<log_tab_size, DEPTH));
     std::ostringstream ss;
-    ss << "Hash" << (1<<log_tab_size);
+    ss << "HashCTW" << (1<<log_tab_size);
     LineItem hm_li{.fn = name,
                    .mn=ss.str(),
                    .fs=bytes.size(),
@@ -50,10 +51,20 @@ LineItem do_hash(std::vector<byte_t> const &bytes, std::string const& name, int 
     };
     return hm_li;
 }
+LineItem do_sm(std::vector<byte_t> const &bytes, std::string const &name) {
+    auto res = entropy_of_model(bytes, SequenceMemoizerAmort<ByteAlphabet>(DEPTH));
+    LineItem sm_li{.fn=name,
+                    .mn="SM",
+                    .fs=bytes.size(),
+                    .ms=res.model.footprint(),
+                    .entropy=res.H,
+    };
+    return sm_li;
+}
 int main() {
-    // limit_gb(5);
+    limit_gb(5);
     std::cout << LineItem{}.header() << std::endl;
-    Threadpool tp(4);
+    Threadpool tp(1);
 
     std::vector<std::packaged_task<LineItem()>> stvec;
     for (auto const & name: calgary_names) {
@@ -67,10 +78,16 @@ int main() {
             auto const contents = load_file_in_memory(path);
             return do_hash(contents.bytes, name, i);
         };
-        stvec.emplace_back([ctwfunc](){return ctwfunc();});
-        for (int i =7; i < 19; ++i) {
-            stvec.emplace_back([hfunc, i](){return hfunc(i);});
-        }
+        auto smfunc = [name]() {
+            auto const path = calgary_name_to_path.at(name);
+            auto const contents = load_file_in_memory(path);
+            return do_sm(contents.bytes, name);
+        };
+        stvec.emplace_back([smfunc](){return smfunc();});
+        // stvec.emplace_back([ctwfunc](){return ctwfunc();});
+        // for (int i =7; i < 19; ++i) {
+        //     stvec.emplace_back([hfunc, i](){return hfunc(i);});
+        // }
     }
 
     std::vector<std::future<LineItem>> futvec;

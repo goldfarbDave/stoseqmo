@@ -9,6 +9,7 @@ HEADER_FILES=\
 	models/model_mem.hpp \
 	models/model_utils.hpp \
 	models/hashing.hpp \
+	models/sequencememoizer.hpp \
 	models/volfctw.hpp
 
 
@@ -22,17 +23,17 @@ HEADERS=$(addprefix $(ROOT)/,$(HEADER_FILES))
 CPPFLAGS=-std=c++17 $(OPTFLAGS) -pthread -lpthread -g $(INC) -DROOT_PATH=$(ROOT_IN_QUOTES)
 
 
-all: correctness
-	./correctness
-# all: calgary
-# 	./calgary | time tee calgary.csv
+# all: correctness
+# 	./correctness
+all: calgary
+	./calgary | time tee calgary_rest.csv
 # all: shakespeare
 # 	./shakespeare | time tee shakespeare.csv
 
 
-shakespeare: shakespeare.cpp
+shakespeare: shakespeare.cpp $(HEADERS)
 	g++ $(CPPFLAGS) $< -o $@
-correctness: correctness.cpp
+correctness: correctness.cpp $(HEADERS)
 	g++ $(CPPFLAGS) $< -o $@
-calgary: calgary.cpp
+calgary: calgary.cpp $(HEADERS)
 	g++ $(CPPFLAGS) $< -o $@
