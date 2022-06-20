@@ -28,8 +28,8 @@ class SMNode {
     using idx_t = size_t;
     using IdxContext = Context<idx_t>;
     using ProbAr = std::array<double, num_children>;
-    using count_t = std::size_t;
     // using count_t = std::size_t;
+    using count_t = std::uint8_t;
     std::array<std::unique_ptr<SMNode>, num_children> m_children{};
     std::array<count_t, num_children> m_cs{};
     std::array<count_t, num_children> m_ts{};
@@ -48,17 +48,11 @@ class SMNode {
     }
     SMNode const& get_child(idx_t idx) const {
         assert(m_children[idx]);
-        // if (!m_children[idx]) {
-        //     std::cout << "HERE" << std::endl;}
         return *m_children[idx];
     }
 
     ProbAr weight_probs(ProbAr const &parent_probs) const {
-        // See Eq1. Decomposed from:
-        // (c_i-d*t_i + d*t*pp_i)/c
-        // to:
-        // (c_i/c) - d/c*(t_i + t*pp_i)
-        // Because std::transform can only do binary ops
+        // See Eq1.
         if (!m_ctot) {
             return parent_probs;
         }
@@ -66,14 +60,6 @@ class SMNode {
         for (int i =0; i < tmp.size(); ++i) {
             tmp[i] = (m_cs[i] - m_d*m_ts[i] + m_d*m_ttot*parent_probs[i])/m_ctot;
         }
-        // std::transform(parent_probs.begin(), parent_probs.end(), m_ts.begin(), tmp.begin(),
-        //                [this](auto const &pp, auto const &tus) {
-        //                    return m_d/m_ctot*(tus + m_ttot*pp);
-        //                });
-        // std::transform(tmp.begin(), tmp.end(), m_cs.begin(), tmp.begin(),
-        //                [this](auto const &rhs, auto const &cus) {
-        //                    return cus/m_ctot - rhs;
-        //                });
         return tmp;
 
     }
@@ -83,7 +69,6 @@ class SMNode {
         return ret;
     }
     ProbAr get_probs_rec(IdxContext const &ctx, ProbAr const &parent_probs) const {
-        // Think about how to unroll context to maintain const-ness
         // ! We don't need to because new children return parent probs, so fall through
         if (ctx && m_children[ctx.back()]) {
             return get_child(ctx.back()).get_probs_rec(ctx.popped(), weight_probs(parent_probs));
@@ -95,6 +80,20 @@ class SMNode {
         // Unconditionally increment C
         m_cs[sym] += 1;
         m_ctot += 1;
+        auto const RESCALE_THRESHOLD = std::numeric_limits<uint8_t>::max();
+        if (m_cs[sym] == RESCALE_THRESHOLD) {
+            std::cout << "RESCALE" << std::endl;
+            auto new_total = 0;
+            std::transform(m_cs.begin(), m_cs.end(), m_cs.begin(),
+                           [this, &new_total](auto const &el) {
+                               // Divide by 2, round up
+                               auto nc =(el >> 1) + (el & 1);
+                               new_total += nc;
+                               return nc;
+                           });
+            m_ctot = new_total;
+        }
+
         // Flip T, see old value. In Chinese Restaurant Parlance: we didn't make a new table
         auto old_t = std::exchange(m_ts[sym], 1);
         m_ttot += !old_t;
@@ -156,31 +155,26 @@ public:
 #include "model_utils.hpp"
 #include "ac.hpp"
 #include "limit_mem.hpp"
+#include "utils.hpp"
 template <typename ModelCtorT>
-void correctness_and_entropy_test(ModelCtorT ctor) {
-    static_assert(std::is_same_v<typename decltype(ctor())::Alphabet::sym_t,bit_t>);
-    auto contents = load_file_in_memory(cantbry_name_to_path.at("fields.c"));
-    BitVec compressed;
+void entropy_test(ModelCtorT ctor) {
+    // static_assert(std::is_same_v<typename decltype(ctor())::Alphabet::sym_t,bit_t>);
+    // auto contents = load_file_in_memory(cantbry_name_to_path.at("fields.c"));
+    auto contents = load_file_in_memory(cantbry_name_to_path.at("asyoulik.txt"));
+    auto res = [&]()
     {
-        StreamingACEnc ac(compressed, ctor());
-        for (auto const &sym: contents.bits) {
-            ac.encode(sym);
-        }
-    }
-    std::cout << "Compression: " << contents.bits.size() << " -> " <<compressed.size() << std::endl;
-    StreamingACDec ac(std::move(compressed), ctor());
-    for (auto const &gt : contents.bits) {
-        assert(ac.decode() == gt);
-    }
-    auto res = entropy_of_model(contents.bits, ctor());
+        TimeSection ts("Do calc");
+        return entropy_of_model(contents.bytes, ctor());
+    }();
+
     std::cout << "Entropy: " << res.H << std::endl;
+    std::cout << "bits/Byte: " << res.H / contents.bytes.size() << std::endl;
     std::cout << "Size: " << res.model.footprint().mib() << "MiB" << std::endl;
 }
 int main() {
     limit_gb(3);
-    correctness_and_entropy_test([]() {
-        return SequenceMemoizer<BitAlphabet>(100);
+    entropy_test([]() {
+        return SequenceMemoizer<ByteAlphabet>(12);
     });
     // auto sm = SequenceMemoizer<ByteAlphabet>(5);
-    std::cout <<"hi" << std::endl;
 }
