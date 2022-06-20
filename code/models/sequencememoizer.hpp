@@ -96,7 +96,6 @@ class AmortSM {
         typename SMData<num_children>::Ptr_t idx;
         ProbAr prob;
     };
-    std::vector<IdxAndProb> m_prealloc;
     auto get_deepest_prob(IdxContext const &ctx) const {
         auto idx = 0;
         auto ret= m_vec[0].weight_probs(m_vec[0].get_prior());
@@ -139,7 +138,6 @@ public:
     AmortSM(std::size_t depth) :m_depth{depth} {
         m_vec.reserve(1<<15);
         m_vec.emplace_back(0);
-        m_prealloc.reserve(m_depth+1);
     }
     ProbAr get_probs(IdxContext const &ctx) const {
         return get_deepest_prob(ctx);

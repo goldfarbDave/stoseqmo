@@ -34,6 +34,9 @@ struct Context {
         assert(m_start != m_end);
         return *--m_end;
     }
+    std::size_t size() const {
+        return std::distance(m_start, m_end);
+    }
     Context<DataT> popped() const {
         assert(m_start != m_end);
         return Context(m_start, m_end-1);

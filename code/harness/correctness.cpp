@@ -5,8 +5,9 @@
 #include "corpus.hpp"
 #include "model_utils.hpp"
 
-#include "hashing.hpp"
-#include "sequencememoizer.hpp"
+// #include "hashing.hpp"
+#include "hashsm.hpp"
+// #include "sequencememoizer.hpp"
 #include "volfctw.hpp"
 
 
@@ -29,19 +30,23 @@ void correctness_and_entropy_test(ModelCtorT ctor) {
         assert(ac.decode() == gt);
     }
     auto res = entropy_of_model(contents.bytes, ctor());
-    std::cout << "Entropy: " << res.H << std::endl;
-    std::cout << "Size: " << res.model.footprint().mib() << "MiB" << std::endl;
+    // std::cout << "Entropy: " << res.H << std::endl;
+    std::cout << "Size: " << res.model.footprint().mib() << "MiB (" << res.model.footprint().num_nodes << ")"<< std::endl;
 }
 
 int main() {
     limit_gb(3);
     correctness_and_entropy_test([]() {
-        return VolfModel<ByteAlphabet>(20, 15.0);
+        return HashSMModel<ByteAlphabet>(1<<19, 10);
     });
-    correctness_and_entropy_test([]() {
-        return HashModel<ByteAlphabet>(1000, 10);
-    });
-    correctness_and_entropy_test([]() {
-        return SequenceMemoizerAmort<ByteAlphabet>(10);
-    });
+
+    // correctness_and_entropy_test([]() {
+    //     return VolfModel<ByteAlphabet>(20, 15.0);
+    // });
+    // correctness_and_entropy_test([]() {
+    //     return HashModel<ByteAlphabet>(1000, 10);
+    // });
+    // correctness_and_entropy_test([]() {
+    //     return SequenceMemoizerAmort<ByteAlphabet>(10);
+    // });
 }

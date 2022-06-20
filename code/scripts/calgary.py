@@ -10,4 +10,5 @@ df = df.join((df["Entropy"]/df["FSize"]).to_frame(name="b/B"))
 for fn in np.unique(df["File"]):
     print(fn)
     ndf = df[df["File"] == fn]
-    print(ndf.sort_values(by='b/B').head(2))
+    print(ndf.sort_values(by='b/B'))
+    #print(ndf.sort_values(by='b/B').head(2))
