@@ -10,83 +10,61 @@
 #include "model_mem.hpp"
 
 //template <typename> struct Typedebug;
+constexpr double G_ALPHA{15.0};
 template <std::size_t num_children>
-class VolfNode {
-    using idx_t = size_t;
+class VolfHistogram {
+private:
+    constexpr static std::size_t size = num_children;
+    using idx_t = std::size_t;
     using IdxContext = Context<idx_t>;
     using ProbAr = std::array<double, num_children>;
     using count_t = uint8_t;
     // using count_t = std::size_t;
-    std::array<std::unique_ptr<VolfNode>, num_children> m_children{};
     std::array<count_t, num_children> m_counts{};
     std::size_t m_total{};
     double m_beta{1.0};
-    double m_alpha;
-    std::unique_ptr<VolfNode> make_child() {
-        return std::make_unique<VolfNode>(m_alpha);
+    auto beta_tag() const {
+        return m_beta / (num_children/G_ALPHA + m_total);
     }
-    VolfNode& get_child(idx_t idx) {
-        if (!m_children[idx]) {
-            m_children[idx] = make_child();
-        }
-        return *m_children[idx];
-    }
-    VolfNode const& get_child(idx_t idx) const {
-        assert(m_children[idx]);
-        return *m_children[idx];
-    }
-    ProbAr get_theoretical_new_child_pe_ar() const {
-        ProbAr tmp;
-        std::fill(tmp.begin(), tmp.end(), 1.0/num_children);
-        return tmp;
+public:
+    static constexpr ProbAr get_prior() {
+        ProbAr ret;
+        std::fill(ret.begin(), ret.end(), 1.0/size);
+        return ret;
     }
     ProbAr get_pe_ar() const {
         ProbAr tmp;
         std::transform(m_counts.begin(), m_counts.end(), tmp.begin(),
                        [this](auto const& el) {
-                           return (el + (1/m_alpha))
-                               / (m_total + (num_children/m_alpha));
+                           return (el + (1/G_ALPHA))
+                               / (m_total + (num_children/G_ALPHA));
                        });
         return tmp;
     }
-    void theoretical_apply_weighting(ProbAr &prob_ar) const {
+
+    ProbAr transform_probs(ProbAr const &child_probs) const {
+        ProbAr tmp;
         auto sum = 0.0;
-        std::transform(prob_ar.begin(), prob_ar.end(), prob_ar.begin(),
-                       [this,&sum] (auto const &prob) {
-                           auto val = prob + (1.0/num_children);
-                           sum += val;
-                           return val;
-                       });
-        std::transform(prob_ar.begin(), prob_ar.end(), prob_ar.begin(),
-                       [sum] (auto const &prob) {
-                           return prob/sum;
-                       });
-    }
-    void apply_weighting(ProbAr &prob_ar) const {
-        auto sum = 0.0;
-        std::transform(prob_ar.begin(), prob_ar.end(), m_counts.begin(), prob_ar.begin(),
+        std::transform(child_probs.begin(), child_probs.end(), m_counts.begin(), tmp.begin(),
                        [&sum, this](auto const& prob, auto const& count) {
-                           auto val =prob + (count + 1/m_alpha)*beta_tag();
+                           auto val =prob + (count + 1/G_ALPHA)*beta_tag();
                            sum += val;
                            return val;
                        });
         // auto sum = std::accumulate(prob_ar.begin(), prob_ar.end(), 0.0);
-        std::transform(prob_ar.begin(), prob_ar.end(), prob_ar.begin(),
+        std::transform(tmp.begin(), tmp.end(), tmp.begin(),
                        [sum](auto const &prob) {
                            return prob/sum;
                        });
+        return tmp;
     }
-
-    auto beta_tag() const {
-        return m_beta / (num_children/m_alpha + m_total);
-    }
-    void update_beta(count_t count, double child_pw) {
+    void update_beta(idx_t count_idx, double child_pw) {
         // Update beta, consts from thesis
         auto const beta_thresh = 1500000;
         if ((m_beta > beta_thresh) || (m_beta < (1.0/beta_thresh))) {
             m_beta /= 2;
         } else {
-            m_beta = (count + (1/m_alpha))*beta_tag()/child_pw;
+            m_beta = (m_counts[count_idx] + (1/G_ALPHA))*beta_tag()/child_pw;
         }
     }
     void update_counts(idx_t sym) {
@@ -106,122 +84,94 @@ class VolfNode {
 
         }
     }
+};
+
+template <typename AlphabetT>
+class AmortizedVolf {
 public:
-    static inline std::size_t num_created;
-    VolfNode(double alpha) : m_alpha{alpha} {++num_created;}
-    ProbAr get_probs(IdxContext const &ctx) const {
-        if (!ctx) {
-            return get_pe_ar();
-        }
-        auto idx = ctx.back();
-        ProbAr child_probs;
-        if (m_children[idx]) {
-            auto &child = get_child(idx);
-            child_probs = child.get_probs(ctx.popped());
-        } else {
-            // Unroll children to maintain const-ness
-            child_probs = get_theoretical_new_child_pe_ar();
-            for (auto ictx = ctx; ictx; ictx=ictx.popped()) {
-                theoretical_apply_weighting(child_probs);
+    using Alphabet = AlphabetT;
+    static constexpr std::size_t size = Alphabet::size;
+    using Node=VolfHistogram<size>;
+private:
+    using Ptr_t = uint32_t;
+
+    using idx_t = std::size_t;
+    using ProbAr = std::array<double, size>;
+    using IdxContext = Context<idx_t>;
+    std::vector<Node> m_vec;
+    std::unordered_map<Ptr_t, std::array<Ptr_t, size>> m_adj;
+    std::size_t m_depth;
+    std::vector<Ptr_t> get_idx_chain(IdxContext const &ctx) const {
+        std::vector<Ptr_t> idxs;
+        idxs.reserve(m_depth);
+        auto idx = 0;
+        idxs.push_back(idx);
+        for (IdxContext c= ctx; c; c.pop()) {
+            idx = m_adj.at(idx)[c.back()];
+            if (!idx) {
+                break;
             }
+            idxs.push_back(idx);
         }
-        apply_weighting(child_probs);
-        return child_probs;
+        return idxs;
     }
-    ProbAr learn(IdxContext const& ctx, idx_t sym) {
-        ProbAr pv;
-        if (ctx) {
-            auto idx = ctx.back();
-            auto &child = get_child(idx);
-            pv = child.learn(ctx.popped(), sym);
-            auto child_pw = pv[sym];
-            apply_weighting(pv);
-            update_beta(m_counts[sym], child_pw);
+    std::vector<Ptr_t> make_idx_chain(IdxContext const &ctx) {
+        std::vector<Ptr_t> idxs;
+        idxs.reserve(m_depth);
+        auto idx = 0;
+        idxs.push_back(idx);
+        for (IdxContext c = ctx; c; c.pop()) {
+            auto child_idx = m_adj.at(idx)[c.back()];
+            if (!child_idx) {
+                m_adj[idx][c.back()] = m_vec.size();
+                m_adj[m_vec.size()];
+                child_idx = m_vec.size();
+                m_vec.emplace_back();
+            }
+            idxs.push_back(child_idx);
+            idx = child_idx;
+        }
+        return idxs;
+    }
+public:
+    AmortizedVolf(std::size_t depth) : m_depth{depth} {
+        m_vec.reserve(1<<15);
+        m_vec.emplace_back();
+        m_adj.reserve(1<<15);
+        m_adj[0];
+    }
+    ProbAr get_probs(IdxContext const &ctx) const {
+        auto idxs = get_idx_chain(ctx);
+        ProbAr ret;
+        if (idxs.size() <= ctx.size()) {
+            ret = m_vec[idxs.back()].get_pe_ar();
+            idxs.pop_back();
         } else {
-            pv = get_pe_ar();
+            ret = Node::get_prior();
         }
-        update_counts(sym);
-        return pv;
+        return std::accumulate(idxs.crbegin(), idxs.crend(), ret,
+                               [this](ProbAr const& probar, auto const &idx){
+                                   return m_vec[idx].transform_probs(probar);
+                               });
     }
-};
-
-
-
-template <typename AlphabetT>
-class VolfModel {
-public:
-    using Alphabet= AlphabetT;
-private:
-    // Standard K-Ary implementation discussed as "Solution 1"
-    using idx_t = std::size_t;
-    using sym_t = typename Alphabet::sym_t;
-    MemoryDeque<idx_t> m_past_idxs;
-    VolfNode<Alphabet::size> m_root;
-public:
-    auto get_probs() const{
-        return m_root.get_probs(m_past_idxs.view());
-    }
-    VolfModel(size_t depth, double alpha)
-        : m_past_idxs{depth}
-        , m_root{alpha}
-        {
-            VolfNode<Alphabet::size>::num_created = 0;
+    void learn(IdxContext const &ctx, idx_t sym) {
+        auto idxs = make_idx_chain(ctx);
+        ProbAr probs = m_vec[idxs.back()].get_pe_ar();
+        m_vec[idxs.back()].update_counts(sym);
+        for (auto idx_itr = idxs.crbegin();
+             idx_itr != idxs.crend();
+             ++idx_itr) {
+            auto const child_pw = probs[sym];
+            probs = m_vec[*idx_itr].transform_probs(probs);
+            m_vec[*idx_itr].update_beta(sym, child_pw);
+            m_vec[*idx_itr].update_counts(sym);
         }
+    }
     Footprint footprint() const {
-        return {.num_nodes = VolfNode<Alphabet::size>::num_created,
-                .node_size = sizeof(VolfNode<Alphabet::size>)};
-    }
-    void learn(sym_t sym) {
-        auto idx = Alphabet::to_idx(sym);
-        auto view = m_past_idxs.view();
-        m_root.learn(view, idx);
-        m_past_idxs.push_back(idx);
-    }
-};
-
-
-template <typename AlphabetT>
-class AmnesiaVolfModel {
-public:
-    using Alphabet= AlphabetT;
-private:
-    // Standard K-Ary implementation discussed as "Solution 1"
-    using idx_t = std::size_t;
-    using sym_t = typename Alphabet::sym_t;
-    using Node = VolfNode<Alphabet::size>;
-    MemoryDeque<idx_t> m_past_idxs;
-    Node m_root;
-    std::size_t m_max_size;
-    double m_alpha;
-public:
-    auto get_probs() const{
-        return m_root.get_probs(m_past_idxs.view());
-    }
-    AmnesiaVolfModel(size_t depth, double alpha, std::size_t max_size)
-        : m_past_idxs{depth}
-        , m_root{alpha}
-        , m_max_size{max_size}
-        , m_alpha{alpha}
-        {
-            Node::num_created = 0;
-        }
-    Footprint footprint() const {
-        return {.num_nodes = m_max_size,
-                .node_size = sizeof(Node)};
-    }
-    void learn(sym_t sym) {
-        auto idx = Alphabet::to_idx(sym);
-        auto view = m_past_idxs.view();
-        m_root.learn(view, idx);
-        m_past_idxs.push_back(idx);
-        // Forget!
-        if (Node::num_created > m_max_size) {
-            Node::num_created=0;
-            // Let's still keep our context
-            //m_past_idxs.clear();
-            m_root = Node(m_alpha);
-            learn(sym);
-        }
-
+        return {
+            .num_nodes=m_vec.size(),
+            .node_size=sizeof(Node) + sizeof(typename decltype(m_adj)::mapped_type),
+            .is_constant=false
+        };
     }
 };

@@ -5,11 +5,9 @@
 #include "corpus.hpp"
 #include "model_utils.hpp"
 
-// #include "hashing.hpp"
-#include "hashsm.hpp"
-// #include "sequencememoizer.hpp"
-#include "volfctw.hpp"
+#include "models.hpp"
 
+#include "utils.hpp"
 
 template <typename ModelCtorT>
 void correctness_and_entropy_test(ModelCtorT ctor) {
@@ -17,6 +15,7 @@ void correctness_and_entropy_test(ModelCtorT ctor) {
     auto contents = load_file_in_memory(cantbry_name_to_path.at("fields.c"));
     BitVec compressed;
     {
+        TimeSection ts{"Enc"};
         StreamingACEnc ac(compressed, ctor());
         for (auto const &sym: contents.bytes) {
             ac.encode(sym);
@@ -30,23 +29,27 @@ void correctness_and_entropy_test(ModelCtorT ctor) {
         assert(ac.decode() == gt);
     }
     auto res = entropy_of_model(contents.bytes, ctor());
-    // std::cout << "Entropy: " << res.H << std::endl;
-    std::cout << "Size: " << res.model.footprint().mib() << "MiB (" << res.model.footprint().num_nodes << ")"<< std::endl;
+    auto fp = res.model.footprint();
+    std::cout << "Entropy: " << res.H << std::endl;
+    std::cout << "Size: " << fp.mib()
+              << "MiB (" << fp.num_nodes << ", " <<(fp.is_constant ? "capped" : "uncapped") << ")"<< std::endl;
 }
 
 int main() {
     limit_gb(3);
-    correctness_and_entropy_test([]() {
-        return HashSMModel<ByteAlphabet>(1<<19, 10);
-    });
-
     // correctness_and_entropy_test([]() {
-    //     return VolfModel<ByteAlphabet>(20, 15.0);
+    //     return HashSMModel<ByteAlphabet>(1<<19, 10);
     // });
+    correctness_and_entropy_test([]() {
+        return VolfCTWModel<ByteAlphabet>(8);
+    });
+    correctness_and_entropy_test([]() {
+        return AmnesiaVolfCTWModel<ByteAlphabet>(8, 20'000);
+    });
     // correctness_and_entropy_test([]() {
     //     return HashModel<ByteAlphabet>(1000, 10);
     // });
     // correctness_and_entropy_test([]() {
-    //     return SequenceMemoizerAmort<ByteAlphabet>(10);
+    //     return SequenceMemoizerModel<ByteAlphabet>(10);
     // });
 }

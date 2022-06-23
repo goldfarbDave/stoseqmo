@@ -69,13 +69,6 @@ public:
                                [this](ProbAr acc, auto const &idx) {
                                    return lookup(idx).get_probs(acc);
                                });
-        // ProbAr ret = m_table[hashed_idxs.back()].get_probs();
-        // hashed_idxs.pop_back();
-        // while (!hashed_idxs.empty()) {
-        //     tmp = m_table[hashed_idxs.back()].get_probs(ret);
-        //     vals.pop_back();
-        // }
-        // return ret;
     }
 
     std::size_t size() const {

@@ -1,13 +1,16 @@
 ROOT=..
 OPTFLAGS=-O3 -march=native
-INC_DIRS= corpus utils coding/ac models
+PTHREADFLAGS=-pthread -lpthread
+INC_DIRS= corpus utils coding/ac models harness
 HEADER_FILES=\
+	harness/models.hpp \
 	corpus/corpus.hpp \
 	utils/utils.hpp \
 	coding/ac/ac.hpp \
 	models/model_ctx.hpp \
 	models/model_mem.hpp \
 	models/model_utils.hpp \
+	models/model_sequence.hpp \
 	models/hashing.hpp \
 	models/hashsm.hpp \
 	models/sequencememoizer.hpp \
@@ -21,7 +24,7 @@ ROOT_IN_QUOTES=$(addprefix '",$(addsuffix "',$(ROOT)))
 INC=$(addprefix -I$(ROOT)/,$(INC_DIRS))
 HEADERS=$(addprefix $(ROOT)/,$(HEADER_FILES))
 
-CPPFLAGS=-std=c++17 $(OPTFLAGS) -pthread -lpthread -g $(INC) -DROOT_PATH=$(ROOT_IN_QUOTES)
+CPPFLAGS=-std=c++17 $(OPTFLAGS) $(PTHREADFLAGS) -g $(INC) -DROOT_PATH=$(ROOT_IN_QUOTES)
 
 
 all: correctness

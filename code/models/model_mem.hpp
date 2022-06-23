@@ -6,6 +6,7 @@
 struct Footprint {
     std::size_t num_nodes;
     std::size_t node_size;
+    bool is_constant;
     auto mib() const {
         return ((num_nodes*node_size) >> 20);
     }

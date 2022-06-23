@@ -5,24 +5,6 @@
 #include <vector>
 #include "model_ctx.hpp"
 #include "model_mem.hpp"
-// Boost's impl
-template <class T>
-inline void hash_combine(std::size_t& seed, const T& v) {
-    std::hash<T> hasher;
-    seed ^= hasher(v) + 0x9e3779b9 + (seed<<6) + (seed>>2);
-}
-// template <typename El, typename InitFunc, typename BodyFunc>
-// using NestedApply_t = decltype(declval<BodyFunc>{}(declval<InitFunc>{}(declval<El>{})));
-
-// template <typename El, typename InitFunc, typename BodyFunc>
-// NestedApply_t<C::value_type, InitFunc, BodyFunc>
-// pop_accumulate(C cont, InitFunc initfunc, BodyFunc bf) {
-//     auto tmp = init_func(cont.back());
-//     cont.pop_back();
-//     while (!cont.empty()) {
-//         body_func
-//     }
-// }
 template <typename K, typename V>
 class ContextHashTable {
     // For now, let's assume we can peel size out of our value type
@@ -96,13 +78,6 @@ public:
         return m_table.size();
     }
 };
-double get_init_discount(std::size_t depth) {
-    // Values from footnote 2
-    static constexpr std::array<double, 11> g_discount_ar{0.05, 0.7, 0.8, 0.82, 0.84, 0.88, 0.91, 0.92, 0.93, 0.94, 0.95};
-    // Clamp at end of discount ar
-    auto idx = std::min(depth, g_discount_ar.size() - 1);
-    return g_discount_ar[idx];
-}
 template <typename CountT, std::size_t N>
 class SMHistogram {
 private:
@@ -150,7 +125,6 @@ public:
         m_ttot += !old_t;
         return old_t;
     }
-
     static constexpr std::size_t size = N;
 };
 // Hashing ideas: FNV, pearson
