@@ -26,8 +26,6 @@ double get_init_discount(std::size_t depth) {
 template <std::size_t num_children>
 struct SMData {
     using count_t = std::uint8_t;
-    using idx_t = std::size_t;
-    using IdxContext = Context<idx_t>;
     using ProbAr = std::array<double, num_children>;
     using Ptr_t = std::uint32_t;
     std::array<count_t, num_children> m_cs{};
@@ -90,8 +88,6 @@ class AmortSM {
     std::vector<SMData<num_children>> m_vec;
     std::size_t m_root{0};
     std::size_t m_depth;
-    using idx_t = size_t;
-    using IdxContext = Context<idx_t>;
     using ProbAr = std::array<double, num_children>;
     struct IdxAndProb {
         typename SMData<num_children>::Ptr_t idx;
@@ -161,8 +157,6 @@ public:
 
 template <std::size_t num_children>
 class SMNode {
-    using idx_t = size_t;
-    using IdxContext = Context<idx_t>;
     using ProbAr = std::array<double, num_children>;
     // using count_t = std::size_t;
     using count_t = std::uint8_t;
@@ -262,8 +256,6 @@ public:
     using Alphabet = AlphabetT;
 private:
     using count_t = std::size_t;
-    using idx_t = std::size_t;
-    using sym_t = typename Alphabet::sym_t;
     MemoryDeque<idx_t> m_past_idxs;
     using Node = SMNode<Alphabet::size>;
     SMNode<Alphabet::size> m_root;
@@ -291,7 +283,6 @@ public:
     using Alphabet = AlphabetT;
 private:
     using count_t = std::size_t;
-    using idx_t = std::size_t;
     using sym_t = typename Alphabet::sym_t;
     MemoryDeque<idx_t> m_past_idxs;
     AmortSM<Alphabet::size> m_sm;

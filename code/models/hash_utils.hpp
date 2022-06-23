@@ -16,3 +16,16 @@ inline void hash_combine(std::size_t& seed, const T& v) {
 //         body_func
 //     }
 // }
+
+// namespace std {
+//     template <typename DataT>
+//     struct hash<Context<DataT>> {
+//         std::size_t operator()(Context<DataT> ctx) const {
+//             std::size_t seed = 0;
+//             while (ctx) {
+//                 hash_combine(seed, ctx.back_and_pop());
+//             }
+//             return seed;
+//         }
+//     };
+// }

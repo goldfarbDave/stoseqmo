@@ -42,7 +42,8 @@ struct Context {
         return Context(m_start, m_end-1);
     }
 };
-
+// using idx_t = std::size_t;
+using IdxContext = Context<idx_t>;
 template <typename T>
 class MemoryDeque {
     std::vector<T> data;

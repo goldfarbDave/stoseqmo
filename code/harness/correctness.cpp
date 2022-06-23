@@ -1,12 +1,9 @@
 #include <iostream>
 #include "limit_mem.hpp"
-
 #include "ac.hpp"
 #include "corpus.hpp"
 #include "model_utils.hpp"
-
 #include "models.hpp"
-
 #include "utils.hpp"
 
 template <typename ModelCtorT>
@@ -22,7 +19,7 @@ void correctness_and_entropy_test(ModelCtorT ctor) {
         }
     }
     std::cout << "Compression: " << contents.bits.size() << " -> " <<compressed.size() << std::endl;
-    std::cout << "bits/Bytes: " << static_cast<double>(compressed.size())/contents.bytes.size() << std::endl;
+    std::cout << "bits/Bytes: " << static_cast<double>(compressed.size())/static_cast<double>(contents.bytes.size()) << std::endl;
 
     StreamingACDec ac(std::move(compressed), ctor());
     for (auto const &gt : contents.bytes) {
@@ -43,11 +40,11 @@ int main() {
     correctness_and_entropy_test([]() {
         return VolfCTWModel<ByteAlphabet>(8);
     });
-    correctness_and_entropy_test([]() {
-        return AmnesiaVolfCTWModel<ByteAlphabet>(8, 20'000);
-    });
     // correctness_and_entropy_test([]() {
-    //     return HashModel<ByteAlphabet>(1000, 10);
+    //     return AmnesiaVolfCTWModel<ByteAlphabet>(8, 20'000);
+    // });
+    // correctness_and_entropy_test([]() {
+    //     return HashCTWModel<ByteAlphabet>(8, 1<<17);
     // });
     // correctness_and_entropy_test([]() {
     //     return SequenceMemoizerModel<ByteAlphabet>(10);

@@ -26,11 +26,13 @@ public:
     using Alphabet = typename ModelT::Alphabet;
 protected:
     using sym_t = typename Alphabet::sym_t;
-    using idx_t = std::size_t;
     MemoryDeque<idx_t> m_past_idxs;
     ModelT m_underlying;
 public:
-    SequenceModel(std::size_t depth): m_past_idxs{depth}, m_underlying{depth} {}
+    template <typename... Args>
+    SequenceModel(std::size_t depth, Args&&... args)
+        : m_past_idxs{depth}
+        , m_underlying{depth, std::forward<Args>(args)...} {}
     auto get_probs() const {
         return m_underlying.get_probs(m_past_idxs.view());
     }
@@ -51,7 +53,6 @@ public:
     using Alphabet = typename ModelT::Alphabet;
 private:
     using sym_t = typename Alphabet::sym_t;
-    using idx_t = std::size_t;
     MemoryDeque<idx_t> m_past_idxs;
     ModelT m_underlying;
     std::size_t m_max_nodes;

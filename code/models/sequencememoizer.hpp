@@ -28,7 +28,6 @@ class SMHistogram {
 public:
     static constexpr std::size_t size = num_children;
     using count_t = std::uint8_t;
-    using idx_t = std::size_t;
     using ProbAr = std::array<double, num_children>;
 private:
     std::array<count_t, num_children> m_cs{};
@@ -94,8 +93,6 @@ private:
     std::unordered_map<Ptr_t, std::array<Ptr_t, num_children>> m_adj;
     std::size_t m_depth;
     inline static constexpr std::array<Ptr_t, num_children> mzeroinit{};
-    using idx_t = size_t;
-    using IdxContext = Context<idx_t>;
     using ProbAr = std::array<double, num_children>;
     struct IdxAndProb {
         Ptr_t idx;

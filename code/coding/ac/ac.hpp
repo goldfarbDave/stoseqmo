@@ -28,10 +28,10 @@ public:
 private:
 
     std::size_t scale_prob(double prob) const {
-        return static_cast<std::size_t>(prob * m_R);
+        return static_cast<std::size_t>(prob * static_cast<double>(m_R));
     }
     double inv_scale_prob(std::size_t target) const {
-        return static_cast<double>(target)/m_R;
+        return static_cast<double>(target)/static_cast<double>(m_R);
     }
     void narrow_region(ScaledProbs sprobs) {
         m_L += sprobs.excmf;
@@ -88,7 +88,7 @@ public:
             return;
         }
         // Decompressor Mode
-        for (int i = 0 ; i < WHOLEB; ++i) {
+        for (auto i = 0UL ; i < WHOLEB; ++i) {
             read_bit_in();
         }
     }

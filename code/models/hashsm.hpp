@@ -82,8 +82,6 @@ template <typename CountT, std::size_t N>
 class SMHistogram {
 private:
     using count_t = std::uint8_t;
-    using idx_t = std::size_t;
-    using IdxContext = Context<idx_t>;
     using ProbAr = std::array<double, N>;
     using Ptr_t = std::uint32_t;
     std::array<count_t, N> m_cs{};

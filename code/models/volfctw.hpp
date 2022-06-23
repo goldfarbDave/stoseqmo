@@ -15,56 +15,24 @@ template <std::size_t num_children>
 class VolfHistogram {
 private:
     constexpr static std::size_t size = num_children;
-    using idx_t = std::size_t;
-    using IdxContext = Context<idx_t>;
     using ProbAr = std::array<double, num_children>;
     using count_t = uint8_t;
     // using count_t = std::size_t;
-    std::array<count_t, num_children> m_counts{};
     std::size_t m_total{};
     double m_beta{1.0};
     auto beta_tag() const {
-        return m_beta / (num_children/G_ALPHA + m_total);
+        return m_beta / (static_cast<double>(num_children)/G_ALPHA
+                         + static_cast<double>(m_total));
     }
 public:
-    static constexpr ProbAr get_prior() {
-        ProbAr ret;
-        std::fill(ret.begin(), ret.end(), 1.0/size);
-        return ret;
-    }
-    ProbAr get_pe_ar() const {
-        ProbAr tmp;
-        std::transform(m_counts.begin(), m_counts.end(), tmp.begin(),
-                       [this](auto const& el) {
-                           return (el + (1/G_ALPHA))
-                               / (m_total + (num_children/G_ALPHA));
-                       });
-        return tmp;
-    }
-
-    ProbAr transform_probs(ProbAr const &child_probs) const {
-        ProbAr tmp;
-        auto sum = 0.0;
-        std::transform(child_probs.begin(), child_probs.end(), m_counts.begin(), tmp.begin(),
-                       [&sum, this](auto const& prob, auto const& count) {
-                           auto val =prob + (count + 1/G_ALPHA)*beta_tag();
-                           sum += val;
-                           return val;
-                       });
-        // auto sum = std::accumulate(prob_ar.begin(), prob_ar.end(), 0.0);
-        std::transform(tmp.begin(), tmp.end(), tmp.begin(),
-                       [sum](auto const &prob) {
-                           return prob/sum;
-                       });
-        return tmp;
-    }
-    void update_beta(idx_t count_idx, double child_pw) {
+    std::array<count_t, num_children> m_counts{};
+    void update_beta(count_t count, double child_pw) {
         // Update beta, consts from thesis
         auto const beta_thresh = 1500000;
         if ((m_beta > beta_thresh) || (m_beta < (1.0/beta_thresh))) {
             m_beta /= 2;
         } else {
-            m_beta = (m_counts[count_idx] + (1/G_ALPHA))*beta_tag()/child_pw;
+            m_beta = (count + (1/G_ALPHA))*beta_tag()/child_pw;
         }
     }
     void update_counts(idx_t sym) {
@@ -81,8 +49,53 @@ public:
                                return nc;
                            });
             m_total = new_total;
-
         }
+    }
+public:
+    static constexpr ProbAr get_prior() {
+        ProbAr ret;
+        std::fill(ret.begin(), ret.end(), 1.0/size);
+        return ret;
+    }
+    ProbAr get_probs() const {
+        // Pe in the 95 paper
+        ProbAr tmp;
+        std::transform(m_counts.begin(), m_counts.end(), tmp.begin(),
+                       [this](auto const& el) {
+                           return (el + (1/G_ALPHA))
+                               / (static_cast<double>(m_total)
+                                  + static_cast<double>((num_children/G_ALPHA)));
+                       });
+        return tmp;
+    }
+    ProbAr learn(idx_t sym) {
+        // Called in the leaf node case
+        auto ret = get_probs();
+        update_counts(sym);
+        return ret;
+    }
+    ProbAr learn(idx_t sym, ProbAr const& child_probs) {
+        // Internal node case
+        auto const child_pw = child_probs[sym];
+        auto ret = transform_probs(child_probs);
+        update_beta(m_counts[sym], child_pw);
+        update_counts(sym);
+        return ret;
+    }
+    ProbAr transform_probs(ProbAr const &child_probs) const {
+        ProbAr tmp;
+        auto sum = 0.0;
+        std::transform(child_probs.begin(), child_probs.end(), m_counts.begin(), tmp.begin(),
+                       [&sum, this](auto const& prob, auto const& count) {
+                           auto val =prob + (count + 1/G_ALPHA)*beta_tag();
+                           sum += val;
+                           return val;
+                       });
+        std::transform(tmp.begin(), tmp.end(), tmp.begin(),
+                       [sum](auto const &prob) {
+                           return prob/sum;
+                       });
+        return tmp;
     }
 };
 
@@ -93,18 +106,15 @@ public:
     static constexpr std::size_t size = Alphabet::size;
     using Node=VolfHistogram<size>;
 private:
-    using Ptr_t = uint32_t;
-
-    using idx_t = std::size_t;
+    using Ptr_t = uint64_t;
     using ProbAr = std::array<double, size>;
-    using IdxContext = Context<idx_t>;
     std::vector<Node> m_vec;
     std::unordered_map<Ptr_t, std::array<Ptr_t, size>> m_adj;
     std::size_t m_depth;
     std::vector<Ptr_t> get_idx_chain(IdxContext const &ctx) const {
         std::vector<Ptr_t> idxs;
         idxs.reserve(m_depth);
-        auto idx = 0;
+        auto idx = 0UL;
         idxs.push_back(idx);
         for (IdxContext c= ctx; c; c.pop()) {
             idx = m_adj.at(idx)[c.back()];
@@ -115,10 +125,11 @@ private:
         }
         return idxs;
     }
+
     std::vector<Ptr_t> make_idx_chain(IdxContext const &ctx) {
         std::vector<Ptr_t> idxs;
         idxs.reserve(m_depth);
-        auto idx = 0;
+        auto idx = 0UL;
         idxs.push_back(idx);
         for (IdxContext c = ctx; c; c.pop()) {
             auto child_idx = m_adj.at(idx)[c.back()];
@@ -143,8 +154,8 @@ public:
     ProbAr get_probs(IdxContext const &ctx) const {
         auto idxs = get_idx_chain(ctx);
         ProbAr ret;
-        if (idxs.size() <= ctx.size()) {
-            ret = m_vec[idxs.back()].get_pe_ar();
+        if (idxs.size() <= ctx.size()+1) {
+            ret = m_vec[idxs.back()].get_probs();
             idxs.pop_back();
         } else {
             ret = Node::get_prior();
@@ -156,17 +167,14 @@ public:
     }
     void learn(IdxContext const &ctx, idx_t sym) {
         auto idxs = make_idx_chain(ctx);
-        ProbAr probs = m_vec[idxs.back()].get_pe_ar();
-        m_vec[idxs.back()].update_counts(sym);
-        for (auto idx_itr = idxs.crbegin();
-             idx_itr != idxs.crend();
-             ++idx_itr) {
-            auto const child_pw = probs[sym];
-            probs = m_vec[*idx_itr].transform_probs(probs);
-            m_vec[*idx_itr].update_beta(sym, child_pw);
-            m_vec[*idx_itr].update_counts(sym);
-        }
+        std::accumulate(std::next(idxs.crbegin()),
+                        idxs.crend(),
+                        m_vec[idxs.back()].learn(sym),
+                        [this, sym](ProbAr const &acc, auto const &idx) {
+                            return m_vec[idx].learn(sym, acc);
+                        });
     }
+
     Footprint footprint() const {
         return {
             .num_nodes=m_vec.size(),

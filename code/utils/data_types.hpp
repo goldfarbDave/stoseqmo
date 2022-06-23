@@ -12,6 +12,8 @@ constexpr std::underlying_type_t<E> to_underlying(E e) noexcept {
 }
 enum class bit_t : uint8_t {ZERO=0, ONE=1};
 enum class byte_t : uint8_t {};
+using idx_t = std::size_t;
+
 using BitVec = std::vector<bit_t>;
 bit_t flipbit(bit_t bit) {
     return bit == bit_t::ONE ? bit_t::ZERO : bit_t::ONE;
@@ -36,7 +38,7 @@ struct ByteAlphabet {
     }
     template <typename T>
     static constexpr sym_t to_sym(T idx) {
-        assert(idx < size);
+        assert(idx < static_cast<int>(size));
         return sym_t(idx);
     }
 };
