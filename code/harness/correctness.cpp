@@ -43,9 +43,9 @@ int main() {
     // correctness_and_entropy_test([]() {
     //     return AmnesiaVolfCTWModel<ByteAlphabet>(8, 20'000);
     // });
-    // correctness_and_entropy_test([]() {
-    //     return HashCTWModel<ByteAlphabet>(8, 1<<17);
-    // });
+    correctness_and_entropy_test([]() {
+        return HashCTWModel<ByteAlphabet>(8, 24983UL);
+    });
     // correctness_and_entropy_test([]() {
     //     return SequenceMemoizerModel<ByteAlphabet>(10);
     // });
