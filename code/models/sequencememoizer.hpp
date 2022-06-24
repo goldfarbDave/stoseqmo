@@ -10,6 +10,7 @@
 #include <numeric>
 #include <iostream>
 #include <memory>
+#include <random>
 #include <utility>
 #include <unordered_map>
 #include <vector>
@@ -17,6 +18,18 @@
 #include "model_ctx.hpp"
 #include "model_mem.hpp"
 #include "model_sequence.hpp"
+
+// using gen_t = std::mt19937_64;
+using gen_t = std::minstd_rand;
+extern gen_t GLOBAL_GEN;
+
+template <typename C>
+double sum(C const &cont) {
+    return std::accumulate(cont.cbegin(), cont.cend(), 0.0, [](double acc, const auto &el) {
+        return acc + el;
+    });
+}
+
 double get_init_discount(std::size_t depth) {
     // Values from footnote 2
     static constexpr std::array<double, 11> g_discount_ar{0.05, 0.7, 0.8, 0.82, 0.84, 0.88, 0.91, 0.92, 0.93, 0.94, 0.95};
@@ -25,7 +38,8 @@ double get_init_discount(std::size_t depth) {
     return g_discount_ar[idx];
 }
 template <std::size_t num_children>
-class SMHistogram {
+class SMUKNHistogram {
+    // Uses "Unbounded-depth Kneser-Ney" technique
 public:
     static constexpr std::size_t size = num_children;
     using count_t = std::uint8_t;
@@ -36,6 +50,7 @@ private:
     std::size_t m_ttot{};
     // Tracked externally along with depth
 public:
+    gen_t *gen_ptr;
     ProbAr transform_probs(ProbAr const &parent_probs, std::size_t depth) const {
         // See Eq1.
         if (!m_ccounter.total()) {
@@ -59,7 +74,7 @@ public:
         return ret;
     }
 
-    bool update_counts(idx_t sym, ProbAr const& /*parent_probs*/) {
+    bool update_counts(idx_t sym, ProbAr const& /*parent_probs*/, std::size_t /*depth*/) {
         // Unconditionally increment C
         m_ccounter.increment(sym);
         // Flip T, see old value. In Chinese Restaurant Parlance: we didn't make a new table
@@ -70,21 +85,99 @@ public:
 };
 
 
+template <std::size_t num_children>
+class SM1PFHistogram {
+    // Uses "probabilistic updates" method, dubbed 1PF
+public:
+    static constexpr std::size_t size = num_children;
+    using count_t = std::uint8_t;
+    using ProbAr = std::array<double, num_children>;
+    gen_t *gen_ptr;
+private:
+    RescalingCounter<count_t, num_children> m_ccounter;
+    RescalingCounter<count_t, num_children> m_tcounter;
+    bool flip_coin(double prob) {
+        std::bernoulli_distribution dist(prob);
+        return dist(*gen_ptr);
+    }
+    // Tracked externally along with depth
+public:
+    ProbAr transform_probs(ProbAr const &parent_probs, std::size_t depth) const {
+        // See Eq1.
+        if (!m_ccounter.total()) {
+            return parent_probs;
+        }
+        auto const discount = get_init_discount(depth);
+        ProbAr tmp;
+        auto acc =0.0;
+        for (auto i =0UL; i < tmp.size(); ++i) {
+            tmp[i] = (std::max(m_ccounter[i] - (discount*m_tcounter[i]), 0.0)
+                      + (discount
+                         * static_cast<double>(m_tcounter.total())
+                         * parent_probs[i]))
+                / static_cast<double>(m_ccounter.total());
+
+            acc += tmp[i];
+            // if (tmp[i] >= 1.0) {
+            //     std::cout <<"INNER" << std::endl;
+            // }
+        }
+        std::transform(tmp.begin(), tmp.end(), tmp.begin(), [acc](auto const& el) {
+            return el/acc;
+        });
+
+        return tmp;
+    }
+    static constexpr ProbAr get_prior() {
+        ProbAr ret;
+        std::fill(ret.begin(), ret.end(), 1.0/num_children);
+        return ret;
+    }
+
+    bool update_counts(idx_t sym, ProbAr const& parent_probs, std::size_t depth) {
+        // Unconditionally increment C
+        m_ccounter.increment(sym);
+        // More sophisticated update:
+        auto const old_t = m_tcounter[sym];
+
+        if (!m_tcounter[sym]) m_tcounter.increment(sym);
+        auto const discount = get_init_discount(depth);
+        auto const numer = discount * static_cast<double>(m_tcounter.total()) * parent_probs[sym];
+        auto const denom = m_ccounter[sym] - (discount * m_tcounter[sym]) + (numer);
+        if (flip_coin(numer/denom)) {
+            m_tcounter.increment(sym);
+        }
+        return old_t == m_tcounter[sym];
+    }
+};
+
+// template <typename T, typename =void>
+// struct needs_gen : std::false_type {};
+// template <typename T>
+// struct needs_gen<T, std::void_t<decltype(std::declval<T>().gen_ptr)>> : std::true_type {};
+// template <typename T>
+// inline constexpr bool needs_gen_v = needs_gen<T>::value;
 
 // Amortizes node allocation through std::vector resize semantics
-template <std::size_t N>
+template <typename HistogramT>
 class AmortizedSM {
     // Dynamic storage of children from a central allocation
-    static constexpr std::size_t num_children = N;
+    static constexpr std::size_t size = HistogramT::size;
 public:
-    using Node=SMHistogram<num_children>;
+    using Node=HistogramT;
 private:
+    void add_histogram() {
+        m_vec.emplace_back();
+        // m_vec.back().gen_ptr = &m_gen;
+        m_vec.back().gen_ptr = &GLOBAL_GEN;
+    }
     using Ptr_t=uint32_t;
     std::vector<Node> m_vec;
-    std::unordered_map<Ptr_t, std::array<Ptr_t, num_children>> m_adj;
+    std::unordered_map<Ptr_t, std::array<Ptr_t, size>> m_adj;
     std::size_t m_depth;
-    inline static constexpr std::array<Ptr_t, num_children> mzeroinit{};
-    using ProbAr = std::array<double, num_children>;
+    gen_t m_gen{0};
+    inline static constexpr std::array<Ptr_t, size> mzeroinit{};
+    using ProbAr = std::array<double, size>;
     struct IdxAndProb {
         Ptr_t idx;
         ProbAr prob;
@@ -105,7 +198,7 @@ private:
                 m_adj[parent_idx][c.back()] = new_idx;
                 m_adj[new_idx];
                 child_idx = new_idx;
-                m_vec.emplace_back();
+                add_histogram();
             }
             // Push
             cpps.push_back(IdxAndProb{.idx=child_idx,
@@ -114,10 +207,13 @@ private:
         }
         return cpps;
     }
+
 public:
     AmortizedSM(std::size_t depth) :m_depth{depth} {
+        //m_gen.seed(0);
+        GLOBAL_GEN.seed(0);
         m_vec.reserve(1<<15);
-        m_vec.emplace_back();
+        add_histogram();
         m_adj.reserve(1<<15);
         m_adj[0];
     }
@@ -138,9 +234,10 @@ public:
     }
     void learn(IdxContext const &ctx, idx_t sym) {
         auto cpps = get_prob_path(ctx);
+        auto depth{cpps.size()};
         // Work backwards, updating along:
         for (auto itr = cpps.crbegin(); itr != cpps.crend(); ++itr) {
-            if (m_vec[itr->idx].update_counts(sym, itr->prob)) {
+            if (m_vec[itr->idx].update_counts(sym, itr->prob, depth--)) {
                 break;
             }
         }

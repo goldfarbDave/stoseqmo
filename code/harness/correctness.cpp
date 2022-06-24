@@ -6,10 +6,12 @@
 #include "models.hpp"
 #include "utils.hpp"
 
+
 template <typename ModelCtorT>
 void correctness_and_entropy_test(ModelCtorT ctor) {
     static_assert(std::is_same_v<typename decltype(ctor())::Alphabet::sym_t,byte_t>);
     auto contents = load_file_in_memory(cantbry_name_to_path.at("fields.c"));
+    // auto contents = load_file_in_memory(calgary_name_to_path.at("bib"));
     BitVec compressed;
     {
         TimeSection ts{"Enc"};
@@ -32,6 +34,7 @@ void correctness_and_entropy_test(ModelCtorT ctor) {
               << "MiB (" << fp.num_nodes << ", " <<(fp.is_constant ? "capped" : "uncapped") << ")"<< std::endl;
 }
 
+gen_t GLOBAL_GEN{0};
 int main() {
     limit_gb(3);
     // correctness_and_entropy_test([]() {
@@ -46,10 +49,17 @@ int main() {
     // correctness_and_entropy_test([]() {
     //     return HashCTWModel<ByteAlphabet>(8, 24983UL);
     // });
+    // correctness_and_entropy_test([]() {
+    //     return SMUKNModel<ByteAlphabet>(10);
+    // });
+    // correctness_and_entropy_test([]() {
+    //     return HashSMUKNModel<ByteAlphabet>(10, 30'000UL);
+    // });
+
     correctness_and_entropy_test([]() {
-        return SequenceMemoizerModel<ByteAlphabet>(10);
+        return SM1PFModel<ByteAlphabet>(10);
     });
     correctness_and_entropy_test([]() {
-        return HashSequenceMemoizerModel<ByteAlphabet>(10, 30'000UL);
+        return HashSM1PFModel<ByteAlphabet>(10, 30'000UL);
     });
 }

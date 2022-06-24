@@ -8,6 +8,7 @@
 #include "hash_utils.hpp"
 // Hash Table that calls histogram methods from bottom of context, to top
 // Follows semantics of CTW
+extern gen_t GLOBAL_GEN;
 template <std::size_t N>
 class HashVolf {
 public:
@@ -69,11 +70,11 @@ public:
     }
 };
 
-template <std::size_t N>
-class HashSequenceMemoizer {
+template <typename HistogramT>
+class HashTopDown {
 public:
-    constexpr static std::size_t size = N;
-    using Node = SMHistogram<N>;
+    constexpr static std::size_t size = HistogramT::size;
+    using Node = HistogramT;
 private:
     std::size_t m_depth{};
     std::vector<Node> m_table;
@@ -105,16 +106,26 @@ private:
         }
         return ret;
     }
+    gen_t m_gen;
 public:
-    HashSequenceMemoizer(std::size_t depth, std::size_t num_entries)
+
+    HashTopDown(std::size_t depth, std::size_t num_entries)
         : m_depth{depth}
-        , m_table(num_entries) {}
+        , m_table(num_entries) {
+        // m_gen.seed(0);
+        GLOBAL_GEN.seed(0);
+        for (auto &el : m_table) {
+            el.gen_ptr = &GLOBAL_GEN;
+            // el.gen_ptr = &m_gen;
+        }
+    }
 
     void learn(IdxContext const &ctx, idx_t const & sym) {
         // Naive approach, build up counts, then iterate backwards (deeper to shallower context)
         auto hash_pps = ctx_to_path_prob(ctx);
+        auto depth{hash_pps.size()};
         for (auto itr = hash_pps.rbegin(); itr != hash_pps.rend(); ++itr) {
-            if (lookup(itr->idx).update_counts(sym, itr->parent_prob)) {
+            if (lookup(itr->idx).update_counts(sym, itr->parent_prob, depth--)) {
                 break;
             }
         }

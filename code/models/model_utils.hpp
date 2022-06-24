@@ -8,7 +8,8 @@
 template <typename ModelT>
 double pmf(ModelT const& model, typename ModelT::Alphabet::sym_t sym) {
     auto idx = ModelT::Alphabet::to_idx(sym);
-    return model.get_probs()[idx];
+    auto const probs = model.get_probs();
+    return probs[idx];
 }
 template <typename ModelT>
 double excmf(ModelT const& model, typename ModelT::Alphabet::sym_t sym) {
