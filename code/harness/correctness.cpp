@@ -37,16 +37,19 @@ int main() {
     // correctness_and_entropy_test([]() {
     //     return HashSMModel<ByteAlphabet>(1<<19, 10);
     // });
-    correctness_and_entropy_test([]() {
-        return VolfCTWModel<ByteAlphabet>(8);
-    });
+    // correctness_and_entropy_test([]() {
+    //     return VolfCTWModel<ByteAlphabet>(8);
+    // });
     // correctness_and_entropy_test([]() {
     //     return AmnesiaVolfCTWModel<ByteAlphabet>(8, 20'000);
     // });
-    correctness_and_entropy_test([]() {
-        return HashCTWModel<ByteAlphabet>(8, 24983UL);
-    });
     // correctness_and_entropy_test([]() {
-    //     return SequenceMemoizerModel<ByteAlphabet>(10);
+    //     return HashCTWModel<ByteAlphabet>(8, 24983UL);
     // });
+    correctness_and_entropy_test([]() {
+        return SequenceMemoizerModel<ByteAlphabet>(10);
+    });
+    correctness_and_entropy_test([]() {
+        return HashSequenceMemoizerModel<ByteAlphabet>(10);
+    });
 }
