@@ -20,15 +20,16 @@
 // For failing at instantiation-time rather than template-parse time
 // template<class T> struct delayed_false : std::false_type {};
 
-template <class ModelT>
+template <class ModelT, class AlphabetT>
 class SequenceModel {
 public:
-    using Alphabet = typename ModelT::Alphabet;
-protected:
+    using Alphabet = AlphabetT;
+private:
     using sym_t = typename Alphabet::sym_t;
     MemoryDeque<idx_t> m_past_idxs;
     ModelT m_underlying;
 public:
+
     template <typename... Args>
     SequenceModel(std::size_t depth, Args&&... args)
         : m_past_idxs{depth}
@@ -47,10 +48,8 @@ public:
     }
 };
 
-template <class ModelT>
+template <class ModelT, class Alphabet>
 class AmnesiaSequenceModel {
-public:
-    using Alphabet = typename ModelT::Alphabet;
 private:
     using sym_t = typename Alphabet::sym_t;
     MemoryDeque<idx_t> m_past_idxs;

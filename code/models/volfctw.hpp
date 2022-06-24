@@ -1,5 +1,5 @@
-// Adapted from https://github.com/omerktz/VMMPredictor/blob/master/vmms/vmm/vmm/algs/ctw/VolfNode.java
 #pragma once
+// Adapted from https://github.com/omerktz/VMMPredictor/blob/master/vmms/vmm/vmm/algs/ctw/VolfNode.java
 #include <algorithm>
 #include <limits>
 #include <memory>
@@ -8,7 +8,7 @@
 
 #include "model_ctx.hpp"
 #include "model_mem.hpp"
-
+#include "model_counter.hpp"
 //template <typename> struct Typedebug;
 constexpr double G_ALPHA{15.0};
 template <std::size_t num_children>
@@ -16,16 +16,15 @@ class VolfHistogram {
 private:
     constexpr static std::size_t size = num_children;
     using ProbAr = std::array<double, num_children>;
+    //using count_t = std::size_t;
     using count_t = uint8_t;
-    // using count_t = std::size_t;
-    std::size_t m_total{};
+    RescalingCounter<count_t, num_children> m_counter;
     double m_beta{1.0};
     auto beta_tag() const {
         return m_beta / (static_cast<double>(num_children)/G_ALPHA
-                         + static_cast<double>(m_total));
+                         + static_cast<double>(m_counter.total()));
     }
 public:
-    std::array<count_t, num_children> m_counts{};
     void update_beta(count_t count, double child_pw) {
         // Update beta, consts from thesis
         auto const beta_thresh = 1500000;
@@ -36,20 +35,7 @@ public:
         }
     }
     void update_counts(idx_t sym) {
-        m_counts[sym] += 1;
-        m_total += 1;
-        auto const RESCALE_THRESHOLD = std::numeric_limits<uint8_t>::max();
-        if (m_counts[sym] == RESCALE_THRESHOLD) {
-            auto new_total = 0;
-            std::transform(m_counts.begin(), m_counts.end(), m_counts.begin(),
-                           [this, &new_total](auto const &el) {
-                               // Divide by 2, round up
-                               auto nc =(el >> 1) + (el & 1);
-                               new_total += nc;
-                               return nc;
-                           });
-            m_total = new_total;
-        }
+        m_counter.increment(sym);
     }
 public:
     static constexpr ProbAr get_prior() {
@@ -60,10 +46,10 @@ public:
     ProbAr get_probs() const {
         // Pe in the 95 paper
         ProbAr tmp;
-        std::transform(m_counts.begin(), m_counts.end(), tmp.begin(),
+        std::transform(m_counter.begin(), m_counter.end(), tmp.begin(),
                        [this](auto const& el) {
                            return (el + (1/G_ALPHA))
-                               / (static_cast<double>(m_total)
+                               / (static_cast<double>(m_counter.total())
                                   + static_cast<double>((num_children/G_ALPHA)));
                        });
         return tmp;
@@ -78,14 +64,14 @@ public:
         // Internal node case
         auto const child_pw = child_probs[sym];
         auto ret = transform_probs(child_probs);
-        update_beta(m_counts[sym], child_pw);
+        update_beta(m_counter[sym], child_pw);
         update_counts(sym);
         return ret;
     }
     ProbAr transform_probs(ProbAr const &child_probs) const {
         ProbAr tmp;
         auto sum = 0.0;
-        std::transform(child_probs.begin(), child_probs.end(), m_counts.begin(), tmp.begin(),
+        std::transform(child_probs.begin(), child_probs.end(), m_counter.begin(), tmp.begin(),
                        [&sum, this](auto const& prob, auto const& count) {
                            auto val =prob + (count + 1/G_ALPHA)*beta_tag();
                            sum += val;
@@ -99,14 +85,13 @@ public:
     }
 };
 
-template <typename AlphabetT>
+template <std::size_t N>
 class AmortizedVolf {
 public:
-    using Alphabet = AlphabetT;
-    static constexpr std::size_t size = Alphabet::size;
+    static constexpr std::size_t size = N;
     using Node=VolfHistogram<size>;
 private:
-    using Ptr_t = uint64_t;
+    using Ptr_t = uint32_t;
     using ProbAr = std::array<double, size>;
     std::vector<Node> m_vec;
     std::unordered_map<Ptr_t, std::array<Ptr_t, size>> m_adj;

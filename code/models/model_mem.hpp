@@ -1,5 +1,5 @@
-// Simple interface to allow a model to communicate its memory footprint
 #pragma once
+// Simple interface to allow a model to communicate its memory footprint
 #include <sstream>
 #include <string>
 

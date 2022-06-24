@@ -1,5 +1,5 @@
-// Utilities to deal with strongly-typed bits and bytes
 #pragma once
+// Utilities to deal with strongly-typed bits and bytes
 #include <array>
 #include <cassert>
 #include <type_traits>

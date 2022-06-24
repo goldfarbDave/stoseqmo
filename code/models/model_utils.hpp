@@ -1,5 +1,5 @@
-// Utilities for using models (models should not include this file)
 #pragma once
+// Utilities for using models (models should not include this file)
 #include <algorithm>
 #include <numeric>
 #include <iterator>

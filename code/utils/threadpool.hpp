@@ -1,8 +1,8 @@
+#pragma once
 /*
  * This file is licensed under the zlib/libpng license
  */
 // From https://raw.githubusercontent.com/greyfade/workqueue/master/threadpool.hpp
-#pragma once
 #include <future>
 #include <thread>
 #include <deque>

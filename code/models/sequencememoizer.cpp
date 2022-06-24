@@ -255,6 +255,7 @@ class SequenceMemoizer {
 public:
     using Alphabet = AlphabetT;
 private:
+    using sym_t = typename Alphabet::sym_t;
     using count_t = std::size_t;
     MemoryDeque<idx_t> m_past_idxs;
     using Node = SMNode<Alphabet::size>;

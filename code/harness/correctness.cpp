@@ -50,6 +50,6 @@ int main() {
         return SequenceMemoizerModel<ByteAlphabet>(10);
     });
     correctness_and_entropy_test([]() {
-        return HashSequenceMemoizerModel<ByteAlphabet>(10);
+        return HashSequenceMemoizerModel<ByteAlphabet>(10, 30'000UL);
     });
 }

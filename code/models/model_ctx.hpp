@@ -1,5 +1,5 @@
-// Utilities for context-based models.
 #pragma once
+// Utilities for context-based models.
 #include <cassert>
 #include <vector>
 

@@ -1,3 +1,4 @@
+#pragma once
 #include <sys/resource.h>
 #include <sstream>
 void limit_gb(std::size_t GB) {

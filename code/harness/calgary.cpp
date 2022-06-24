@@ -6,10 +6,7 @@
 #include "corpus.hpp"
 #include "model_utils.hpp"
 
-//#include "hashing.hpp"
-#include "volfctw.hpp"
-//#include "sequencememoizer.hpp"
-#include "hashsm.hpp"
+#include "models.hpp"
 #include "threadpool.hpp"
 struct LineItem {
     std::string fn;
@@ -60,7 +57,9 @@ constexpr auto DEPTH = 8;
 //     return sm_li;
 // }
 LineItem do_hashsm(std::vector<byte_t> const &bytes, std::string const& name, int log_tab_size) {
-    auto res = entropy_of_model(bytes, HashSMModel<ByteAlphabet>(1<<log_tab_size, DEPTH));
+    auto res = entropy_of_model(bytes,
+                                HashSequenceMemoizerModel<ByteAlphabet>(DEPTH,
+                                                                        1UL<<log_tab_size));
     LineItem hsm_li{.fn = name,
                     .mn="HashSM",
                     .fs=bytes.size(),
