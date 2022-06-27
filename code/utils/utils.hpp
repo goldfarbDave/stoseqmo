@@ -1,7 +1,9 @@
 #pragma once
 #include <chrono>
 #include <string>
+#include <ostream>
 #include <iostream> // Remove once reworked timesection
+#include <iomanip>
 class TimeSection {
     using time_t = decltype(std::chrono::high_resolution_clock::now());
     std::string name;
@@ -17,3 +19,19 @@ public:
         std::cout << name << " took " << ms << "ms (" << ns << "us)" << std::endl;
     }
 };
+template <typename ModelT>
+std::string print_probs(ModelT const &model) {
+    std::ostringstream ss;
+    auto probs = model.get_probs();
+    int i = 0;
+    ss << "{";
+    for (auto &p: probs) {
+        ss << std::setprecision(4) <<  p << ", ";
+        ++i;
+        if (i % 10 == 0) {
+            ss << "\n";
+        }
+    }
+    ss << "}";
+    return ss.str();
+}

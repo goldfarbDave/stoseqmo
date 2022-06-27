@@ -8,7 +8,6 @@
 #include "hash_utils.hpp"
 // Hash Table that calls histogram methods from bottom of context, to top
 // Follows semantics of CTW
-extern gen_t GLOBAL_GEN;
 template <std::size_t N>
 class HashVolf {
 public:
@@ -106,19 +105,11 @@ private:
         }
         return ret;
     }
-    gen_t m_gen;
 public:
 
     HashTopDown(std::size_t depth, std::size_t num_entries)
         : m_depth{depth}
-        , m_table(num_entries) {
-        // m_gen.seed(0);
-        GLOBAL_GEN.seed(0);
-        for (auto &el : m_table) {
-            el.gen_ptr = &GLOBAL_GEN;
-            // el.gen_ptr = &m_gen;
-        }
-    }
+        , m_table(num_entries) {}
 
     void learn(IdxContext const &ctx, idx_t const & sym) {
         // Naive approach, build up counts, then iterate backwards (deeper to shallower context)

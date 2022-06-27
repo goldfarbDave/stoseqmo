@@ -19,9 +19,19 @@
 #include "model_mem.hpp"
 #include "model_sequence.hpp"
 
-// using gen_t = std::mt19937_64;
-using gen_t = std::minstd_rand;
-extern gen_t GLOBAL_GEN;
+
+
+class CoinFlipper {
+    using gen_t = std::mt19937_64;
+    //using gen_t = std::minstd_rand;
+    gen_t m_gen{0};
+public:
+    bool operator()(double prob) {
+        std::bernoulli_distribution dist{prob};
+        return dist(m_gen);
+    }
+};
+
 
 template <typename C>
 double sum(C const &cont) {
@@ -50,7 +60,6 @@ private:
     std::size_t m_ttot{};
     // Tracked externally along with depth
 public:
-    gen_t *gen_ptr;
     ProbAr transform_probs(ProbAr const &parent_probs, std::size_t depth) const {
         // See Eq1.
         if (!m_ccounter.total()) {
@@ -92,16 +101,14 @@ public:
     static constexpr std::size_t size = num_children;
     using count_t = std::uint8_t;
     using ProbAr = std::array<double, num_children>;
-    gen_t *gen_ptr;
 private:
-    RescalingCounter<count_t, num_children> m_ccounter;
-    RescalingCounter<count_t, num_children> m_tcounter;
-    bool flip_coin(double prob) {
-        std::bernoulli_distribution dist(prob);
-        return dist(*gen_ptr);
-    }
+    RescalingCounter<count_t, num_children> m_ccounter{};
+    RescalingCounter<count_t, num_children> m_tcounter{};
     // Tracked externally along with depth
+
+    CoinFlipper &m_flip;
 public:
+    SM1PFHistogram(CoinFlipper &ref) :m_flip{ref} {}
     ProbAr transform_probs(ProbAr const &parent_probs, std::size_t depth) const {
         // See Eq1.
         if (!m_ccounter.total()) {
@@ -118,9 +125,6 @@ public:
                 / static_cast<double>(m_ccounter.total());
 
             acc += tmp[i];
-            // if (tmp[i] >= 1.0) {
-            //     std::cout <<"INNER" << std::endl;
-            // }
         }
         std::transform(tmp.begin(), tmp.end(), tmp.begin(), [acc](auto const& el) {
             return el/acc;
@@ -144,9 +148,10 @@ public:
         auto const discount = get_init_discount(depth);
         auto const numer = discount * static_cast<double>(m_tcounter.total()) * parent_probs[sym];
         auto const denom = m_ccounter[sym] - (discount * m_tcounter[sym]) + (numer);
-        if (flip_coin(numer/denom)) {
+        if (m_flip(numer/denom)) {
             m_tcounter.increment(sym);
         }
+        // If unchanged, break
         return old_t == m_tcounter[sym];
     }
 };
@@ -167,15 +172,13 @@ public:
     using Node=HistogramT;
 private:
     void add_histogram() {
-        m_vec.emplace_back();
-        // m_vec.back().gen_ptr = &m_gen;
-        m_vec.back().gen_ptr = &GLOBAL_GEN;
+        m_vec.emplace_back(m_flip);
     }
     using Ptr_t=uint32_t;
-    std::vector<Node> m_vec;
-    std::unordered_map<Ptr_t, std::array<Ptr_t, size>> m_adj;
+    std::vector<Node> m_vec{};
+    std::unordered_map<Ptr_t, std::array<Ptr_t, size>> m_adj{};
     std::size_t m_depth;
-    gen_t m_gen{0};
+    CoinFlipper m_flip{};
     inline static constexpr std::array<Ptr_t, size> mzeroinit{};
     using ProbAr = std::array<double, size>;
     struct IdxAndProb {
@@ -210,8 +213,6 @@ private:
 
 public:
     AmortizedSM(std::size_t depth) :m_depth{depth} {
-        //m_gen.seed(0);
-        GLOBAL_GEN.seed(0);
         m_vec.reserve(1<<15);
         add_histogram();
         m_adj.reserve(1<<15);
@@ -237,7 +238,11 @@ public:
         auto depth{cpps.size()};
         // Work backwards, updating along:
         for (auto itr = cpps.crbegin(); itr != cpps.crend(); ++itr) {
-            if (m_vec[itr->idx].update_counts(sym, itr->prob, depth--)) {
+            auto const &p = itr->prob;
+            auto &loc = m_vec[itr->idx];
+            auto res = loc.update_counts(sym, p, depth--);
+            if (res) {
+                // if (m_vec[itr->idx].update_counts(sym, itr->prob, depth--)) {
                 break;
             }
         }

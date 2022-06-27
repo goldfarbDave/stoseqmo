@@ -1,6 +1,6 @@
 ROOT=..
 OPTFLAGS=-O3 -march=native
-WARNFLAGS=-Wall -Wextra -Wconversion -Wdisabled-optimization -Wlogical-op -Wmissing-include-dirs -Wredundant-decls -Wshadow -Wundef -Werror
+WARNFLAGS=-Wall -Wextra -Wconversion -Wdisabled-optimization -Wlogical-op -Wmissing-include-dirs -Wredundant-decls -Wshadow -Wundef -Werror -Wfatal-errors -Weffc++
 #PTHREADFLAGS=-pthread -lpthread
 INC_DIRS= corpus utils coding/ac models harness
 HEADER_FILES=\

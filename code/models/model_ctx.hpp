@@ -46,7 +46,7 @@ struct Context {
 using IdxContext = Context<idx_t>;
 template <typename T>
 class MemoryDeque {
-    std::vector<T> data;
+    std::vector<T> data{};
     std::size_t window_size;
 public:
     MemoryDeque(std::size_t size) : window_size{size} {}

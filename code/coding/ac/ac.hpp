@@ -1,7 +1,6 @@
 #pragma once
 #include "data_types.hpp"
 
-
 constexpr std::size_t PREC{64};
 constexpr std::size_t WHOLEB{PREC-2};
 constexpr std::size_t Q1B{1UL << (WHOLEB - 2)};

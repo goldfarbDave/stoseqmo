@@ -24,17 +24,19 @@ void correctness_and_entropy_test(ModelCtorT ctor) {
     std::cout << "bits/Bytes: " << static_cast<double>(compressed.size())/static_cast<double>(contents.bytes.size()) << std::endl;
 
     StreamingACDec ac(std::move(compressed), ctor());
+
     for (auto const &gt : contents.bytes) {
         assert(ac.decode() == gt);
     }
-    auto res = entropy_of_model(contents.bytes, ctor());
-    auto fp = res.model.footprint();
-    std::cout << "Entropy: " << res.H << std::endl;
-    std::cout << "Size: " << fp.mib()
-              << "MiB (" << fp.num_nodes << ", " <<(fp.is_constant ? "capped" : "uncapped") << ")"<< std::endl;
+    {
+        auto res = entropy_of_model(contents.bytes, ctor());
+        auto fp = res.model.footprint();
+        std::cout << "Entropy: " << res.H << std::endl;
+        std::cout << "Size: " << fp.mib()
+                  << "MiB (" << fp.num_nodes << ", " <<(fp.is_constant ? "capped" : "uncapped") << ")"<< std::endl;
+    }
 }
 
-gen_t GLOBAL_GEN{0};
 int main() {
     limit_gb(3);
     // correctness_and_entropy_test([]() {
@@ -59,7 +61,7 @@ int main() {
     correctness_and_entropy_test([]() {
         return SM1PFModel<ByteAlphabet>(10);
     });
-    correctness_and_entropy_test([]() {
-        return HashSM1PFModel<ByteAlphabet>(10, 30'000UL);
-    });
+    // correctness_and_entropy_test([]() {
+    //     return HashSM1PFModel<ByteAlphabet>(10, 30'000UL);
+    // });
 }
