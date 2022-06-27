@@ -76,6 +76,7 @@ public:
     using Node = HistogramT;
 private:
     std::size_t m_depth{};
+    std::unique_ptr<CoinFlipper> m_flip{std::make_unique<CoinFlipper>()};
     std::vector<Node> m_table;
     using ProbAr = std::array<double, size>;
     Node& lookup(std::size_t hash) {
@@ -106,10 +107,9 @@ private:
         return ret;
     }
 public:
-
     HashTopDown(std::size_t depth, std::size_t num_entries)
         : m_depth{depth}
-        , m_table(num_entries) {}
+        , m_table(num_entries, *m_flip) {}
 
     void learn(IdxContext const &ctx, idx_t const & sym) {
         // Naive approach, build up counts, then iterate backwards (deeper to shallower context)
@@ -124,11 +124,17 @@ public:
     ProbAr get_probs(IdxContext ctx) const {
         auto seed{start_seed};
         auto depth = 0;
-        auto ret = lookup(seed).transform_probs(Node::get_prior(), depth++);
+        auto const prior = Node::get_prior();
+        auto ret = lookup(seed).transform_probs(prior, depth++);
         while (ctx) {
             hash_combine(seed, ctx.pop());
             ret = lookup(seed).transform_probs(ret, depth++);
         }
+        // Mix:
+        std::transform(ret.begin(), ret.end(), prior.begin(), ret.begin(),
+                       [](auto const &r, auto const &p) {
+                           return (99*r + p)/100;
+                       });
         return ret;
     }
     Footprint footprint() const {

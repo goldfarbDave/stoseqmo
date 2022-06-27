@@ -6,7 +6,6 @@
 #include "models.hpp"
 #include "utils.hpp"
 
-
 template <typename ModelCtorT>
 void correctness_and_entropy_test(ModelCtorT ctor) {
     static_assert(std::is_same_v<typename decltype(ctor())::Alphabet::sym_t,byte_t>);
@@ -20,13 +19,14 @@ void correctness_and_entropy_test(ModelCtorT ctor) {
             ac.encode(sym);
         }
     }
-    std::cout << "Compression: " << contents.bits.size() << " -> " <<compressed.size() << std::endl;
-    std::cout << "bits/Bytes: " << static_cast<double>(compressed.size())/static_cast<double>(contents.bytes.size()) << std::endl;
-
-    StreamingACDec ac(std::move(compressed), ctor());
-
-    for (auto const &gt : contents.bytes) {
-        assert(ac.decode() == gt);
+    auto compressed_size = static_cast<double>(compressed.size());
+    std::cout << "Compression: " << contents.bits.size() << " -> " << compressed_size << std::endl;
+    std::cout << "bits/Bytes: " << compressed_size/static_cast<double>(contents.bytes.size()) << std::endl;
+    {
+        StreamingACDec ac(std::move(compressed), ctor());
+        for (auto const &gt : contents.bytes) {
+            assert(ac.decode() == gt);
+        }
     }
     {
         auto res = entropy_of_model(contents.bytes, ctor());
@@ -35,10 +35,11 @@ void correctness_and_entropy_test(ModelCtorT ctor) {
         std::cout << "Size: " << fp.mib()
                   << "MiB (" << fp.num_nodes << ", " <<(fp.is_constant ? "capped" : "uncapped") << ")"<< std::endl;
     }
+
 }
 
 int main() {
-    limit_gb(3);
+    // limit_gb(3);
     // correctness_and_entropy_test([]() {
     //     return HashSMModel<ByteAlphabet>(1<<19, 10);
     // });
@@ -52,16 +53,16 @@ int main() {
     //     return HashCTWModel<ByteAlphabet>(8, 24983UL);
     // });
     // correctness_and_entropy_test([]() {
-    //     return SMUKNModel<ByteAlphabet>(10);
+    //     return SMUKNModel<ByteAlphabet>(15);
     // });
     // correctness_and_entropy_test([]() {
     //     return HashSMUKNModel<ByteAlphabet>(10, 30'000UL);
     // });
-
     correctness_and_entropy_test([]() {
-        return SM1PFModel<ByteAlphabet>(10);
+        return SM1PFModel<ByteAlphabet>(8);
     });
-    // correctness_and_entropy_test([]() {
-    //     return HashSM1PFModel<ByteAlphabet>(10, 30'000UL);
-    // });
+    correctness_and_entropy_test([]() {
+        return HashSM1PFModel<ByteAlphabet>(8, 30'000UL);
+    });
+
 }

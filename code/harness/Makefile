@@ -1,6 +1,7 @@
 ROOT=..
 OPTFLAGS=-O3 -march=native
 WARNFLAGS=-Wall -Wextra -Wconversion -Wdisabled-optimization -Wlogical-op -Wmissing-include-dirs -Wredundant-decls -Wshadow -Wundef -Werror -Wfatal-errors -Weffc++
+ASANFLAGS=-fno-omit-frame-pointer -fsanitize=address
 #PTHREADFLAGS=-pthread -lpthread
 INC_DIRS= corpus utils coding/ac models harness
 HEADER_FILES=\
@@ -36,9 +37,9 @@ all: correctness
 # 	./shakespeare | time tee shakespeare.csv
 
 
-shakespeare: shakespeare.cpp $(HEADERS)
+shakespeare: shakespeare.cpp $(HEADERS) $(MAKEFILE_LIST)
 	g++ $(CPPFLAGS) $< -o $@
-correctness: correctness.cpp $(HEADERS)
+correctness: correctness.cpp $(HEADERS) $(MAKEFILE_LIST)
 	g++ $(CPPFLAGS) $< -o $@
-calgary: calgary.cpp $(HEADERS)
+calgary: calgary.cpp $(HEADERS) $(MAKEFILE_LIST)
 	g++ $(CPPFLAGS) $< -o $@

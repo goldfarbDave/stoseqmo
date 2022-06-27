@@ -22,8 +22,9 @@
 
 
 class CoinFlipper {
-    using gen_t = std::mt19937_64;
-    //using gen_t = std::minstd_rand;
+    // using gen_t = std::mt19937_64;
+    // using gen_t = std::mt19937;
+    using gen_t = std::minstd_rand;
     gen_t m_gen{0};
 public:
     bool operator()(double prob) {
@@ -55,7 +56,7 @@ public:
     using count_t = std::uint8_t;
     using ProbAr = std::array<double, num_children>;
 private:
-    RescalingCounter<count_t, num_children> m_ccounter;
+    RescalingCounter<count_t, num_children> m_ccounter{};
     std::array<count_t, num_children> m_ts{};
     std::size_t m_ttot{};
     // Tracked externally along with depth
@@ -142,17 +143,21 @@ public:
         // Unconditionally increment C
         m_ccounter.increment(sym);
         // More sophisticated update:
-        auto const old_t = m_tcounter[sym];
-
-        if (!m_tcounter[sym]) m_tcounter.increment(sym);
+        if (!m_tcounter[sym]) {
+            m_tcounter.increment(sym);
+            return false;
+        }
         auto const discount = get_init_discount(depth);
         auto const numer = discount * static_cast<double>(m_tcounter.total()) * parent_probs[sym];
         auto const denom = m_ccounter[sym] - (discount * m_tcounter[sym]) + (numer);
         if (m_flip(numer/denom)) {
             m_tcounter.increment(sym);
+            return false;
         }
         // If unchanged, break
-        return old_t == m_tcounter[sym];
+        return true;
+
+
     }
 };
 
@@ -172,13 +177,21 @@ public:
     using Node=HistogramT;
 private:
     void add_histogram() {
-        m_vec.emplace_back(m_flip);
+        if constexpr (std::is_default_constructible_v<Node>) {
+            m_vec.emplace_back();
+        } else {
+            m_vec.emplace_back(*m_flip);
+        }
+
     }
     using Ptr_t=uint32_t;
     std::vector<Node> m_vec{};
     std::unordered_map<Ptr_t, std::array<Ptr_t, size>> m_adj{};
     std::size_t m_depth;
-    CoinFlipper m_flip{};
+    // Making sure this is heap allocated because we want references
+    // formed to this object to be valid after our lifetime (say, if
+    // we're moved-from)
+    std::unique_ptr<CoinFlipper> m_flip{std::make_unique<CoinFlipper>()};
     inline static constexpr std::array<Ptr_t, size> mzeroinit{};
     using ProbAr = std::array<double, size>;
     struct IdxAndProb {
@@ -221,7 +234,8 @@ public:
     ProbAr get_probs(IdxContext const &ctx) const {
         auto idx = 0;
         auto depth = 0;
-        auto ret= m_vec[0].transform_probs(Node::get_prior(), depth++);
+        auto const prior = Node::get_prior();
+        auto ret= m_vec[0].transform_probs(prior, depth++);
         for (IdxContext c = ctx; c; c.pop()) {
             auto const child_idx = m_adj.at(idx)[c.back()];
             // Leave if can't make child
@@ -231,6 +245,11 @@ public:
             ret = m_vec[child_idx].transform_probs(ret, depth++);
             idx = child_idx;
         }
+        // Do root mixing:
+        std::transform(ret.begin(), ret.end(), prior.begin(), ret.begin(),
+                       [](auto const &r, auto const &p) {
+                           return (99*r + p)/100;
+                       });
         return ret;
     }
     void learn(IdxContext const &ctx, idx_t sym) {
@@ -238,11 +257,7 @@ public:
         auto depth{cpps.size()};
         // Work backwards, updating along:
         for (auto itr = cpps.crbegin(); itr != cpps.crend(); ++itr) {
-            auto const &p = itr->prob;
-            auto &loc = m_vec[itr->idx];
-            auto res = loc.update_counts(sym, p, depth--);
-            if (res) {
-                // if (m_vec[itr->idx].update_counts(sym, itr->prob, depth--)) {
+            if (m_vec[itr->idx].update_counts(sym, itr->prob, depth--)) {
                 break;
             }
         }
