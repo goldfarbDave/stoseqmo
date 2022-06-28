@@ -1,19 +1,25 @@
 #pragma once
 #include <vector>
 #include "model_ctx.hpp"
+
+// Boost's impl
+template <class T>
+void hash_combine(std::size_t& seed, const T& v) {
+    std::hash<T> hasher;
+    seed ^= hasher(v) + 0x9e3779b9 + (seed<<6) + (seed>>2);
+}
+
+
 class RandomLookup {
-    std::size_t num_entries;
-    std::size_t start_seed{0};
-private:
-    // Boost's impl
-    template <class T>
-    void hash_combine(std::size_t& seed, const T& v) const {
-        std::hash<T> hasher;
-        seed ^= hasher(v) + 0x9e3779b9 + (seed<<6) + (seed>>2);
-    }
 public:
-    RandomLookup(std::size_t table_size) : num_entries{table_size} {}
-    std::vector<std::size_t> ctx_to_hashes(IdxContext ctx) const {
+    using hash_t = size_t;
+private:
+    std::size_t num_entries;
+    std::size_t depth;
+    std::size_t start_seed{0};
+public:
+    RandomLookup(std::size_t depth_, std::size_t table_size) : num_entries{table_size}, depth{depth_} {}
+    std::vector<hash_t> ctx_to_hashes(IdxContext ctx) const {
         std::vector<std::size_t> ret;
         ret.reserve(ctx.size()+1);
         auto seed{start_seed};
@@ -24,14 +30,18 @@ public:
         }
         return ret;
     }
-    std::size_t hash_to_idx(std::size_t hash) const {
+    std::size_t hash_to_idx(hash_t const &hash) const {
         return hash % num_entries;
     }
 };
 class PureZCTXLookup {
-    std::size_t num_entries;
-    std::size_t start_seed{0};
+public:
+    using hash_t = size_t;
 private:
+    std::size_t num_entries;
+    std::size_t depth;
+    std::size_t start_seed{0};
+
     template <class T>
     inline void guarded_hash_combine(std::size_t& seed, const T& v, std::size_t guard_seed) const {
         std::hash<T> hasher;
@@ -41,9 +51,9 @@ private:
         }
     }
 public:
-    PureZCTXLookup(std::size_t table_size) : num_entries{table_size} {}
-    std::vector<std::size_t> ctx_to_hashes(IdxContext ctx) const {
-        std::vector<std::size_t> ret;
+    PureZCTXLookup(std::size_t depth_, std::size_t table_size) : num_entries{table_size}, depth{depth_} {}
+    std::vector<hash_t> ctx_to_hashes(IdxContext ctx) const {
+        std::vector<hash_t> ret;
         ret.reserve(ctx.size()+1);
         auto seed{start_seed};
         ret.push_back(seed);
@@ -53,7 +63,7 @@ public:
         }
         return ret;
     }
-    std::size_t hash_to_idx(std::size_t hash) const {
+    std::size_t hash_to_idx(hash_t const &hash) const {
         if (hash == start_seed) {
             return 0;
         }
@@ -61,3 +71,33 @@ public:
         return loc ? loc : 1;
     }
 };
+
+
+// Let's only let equal-sized contexts share the same buckets, and
+// then do random allocation from there.
+// It seems reasonable to give exponential spacing?
+class LengthBucketLookup {
+private:
+    struct Key {
+        int depth;
+        std::size_t hash;
+    };
+public:
+    using hash_t = Key;
+private:
+    std::size_t num_entries;
+    std::size_t depth;
+    std::pair<std::size_t, std::size_t> start_and_end_from_depth(std::size_t dep) {
+
+    }
+public:
+    LengthBucketLookup(std::size_t depth, std::size_t table_size) : num_entries{table_size}, depth{depth} {}
+    std::size_t hash_to_idx(hash_t const& hash) const {
+
+    }
+    std::vector<hash_t> ctx_to_hashes(IdxContext ctx) const {
+
+    }
+
+
+}

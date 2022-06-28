@@ -63,7 +63,6 @@ int main() {
     // correctness_and_entropy_test([]() {
     //     return  HashPureZCTXSMUKNModel<ByteAlphabet>(15, 30'000UL);
     // });
-
     correctness_and_entropy_test([]() {
         return  HashPureZCTXSM1PFModel<ByteAlphabet>(15, 30'000UL);
     });

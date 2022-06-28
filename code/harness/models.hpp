@@ -4,6 +4,8 @@
 #include "sequencememoizer.hpp"
 #include "hashing.hpp"
 #include "hash_methods.hpp"
+
+// CTW
 template <typename AlphabetT>
 using VolfCTWModel = SequenceModel<
     AmortizedVolf<
@@ -20,6 +22,13 @@ using HashCTWModel = SequenceModel<
         RandomLookup,
         VolfHistogram<AlphabetT::size>>,
     AlphabetT>;
+using LengthBucketHashCTWModel = SequenceModel<
+    HasherBottomUp<
+        LengthBucketLookup,
+        VolfHistogram<AlphabetT::size>>,
+    AlphabetT>;
+
+// UKN
 template <typename AlphabetT>
 using SMUKNModel = SequenceModel<
     AmortizedSM<
@@ -43,6 +52,7 @@ using HashPureZCTXSMUKNModel = SequenceModel<
         SMUKNHistogram<AlphabetT::size>>,
     AlphabetT>;
 
+// 1PF
 template <typename AlphabetT>
 using SM1PFModel = SequenceModel<
     AmortizedSM<

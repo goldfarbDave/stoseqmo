@@ -13,14 +13,15 @@ public:
     constexpr static std::size_t size = HistogramT::size;
     using Node = HistogramT;
 private:
+    using hash_t = typename HashLookupT::hash_t;
     std::size_t m_depth{};
     HashLookupT m_hasher;
     std::vector<Node> m_table;
     using ProbAr = std::array<double, size>;
-    Node& lookup(std::size_t hash) {
+    Node& lookup(hash_t const& hash) {
         return m_table[m_hasher.hash_to_idx(hash)];
     }
-    Node const & lookup(std::size_t hash) const {
+    Node const & lookup(hash_t const& hash) const {
         return m_table[m_hasher.hash_to_idx(hash)];
     }
 
@@ -28,7 +29,7 @@ private:
 public:
     HasherBottomUp(std::size_t depth, std::size_t num_entries)
         : m_depth{depth}
-        , m_hasher{num_entries}
+        , m_hasher{depth, num_entries}
         , m_table(num_entries) {}
 
     void learn(IdxContext const &ctx, idx_t const & sym) {
@@ -68,20 +69,21 @@ public:
     constexpr static std::size_t size = HistogramT::size;
     using Node = HistogramT;
 private:
+    using hash_t = typename HashLookupT::hash_t;
     std::size_t m_depth{};
     HashLookupT m_hasher;
     std::unique_ptr<CoinFlipper> m_flip{std::make_unique<CoinFlipper>()};
     std::vector<Node> m_table;
     using ProbAr = std::array<double, size>;
-    Node& lookup(std::size_t hash) {
+    Node& lookup(hash_t const &hash) {
         return m_table[m_hasher.hash_to_idx(hash)];
     }
-    Node const & lookup(std::size_t hash) const {
+    Node const & lookup(hash_t const &hash) const {
         return m_table[m_hasher.hash_to_idx(hash)];
     }
     std::size_t start_seed{0};
     struct PathProb {
-        std::size_t hash;
+        hash_t hash;
         ProbAr parent_prob;
     };
     std::vector<PathProb> ctx_to_path_prob(IdxContext ctx) const {
@@ -103,7 +105,7 @@ private:
 public:
     HasherTopDown(std::size_t depth, std::size_t num_entries)
         : m_depth{depth}
-        , m_hasher(num_entries)
+        , m_hasher(depth, num_entries)
         , m_table(num_entries, *m_flip) {}
 
     void learn(IdxContext const &ctx, idx_t const & sym) {
