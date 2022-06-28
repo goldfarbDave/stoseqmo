@@ -12,12 +12,12 @@
 #include <functional>
 #include <type_traits>
 class Threadpool {
-    std::vector<std::thread> pool;
+    std::vector<std::thread> pool{};
     bool stop;
 
-    std::mutex access;
-    std::condition_variable cond;
-    std::deque<std::function<void()>> tasks;
+    std::mutex access{};
+    std::condition_variable cond{};
+    std::deque<std::function<void()>> tasks{};
 
 public:
     explicit Threadpool(int nr) : stop(false) {

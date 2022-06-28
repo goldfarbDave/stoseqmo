@@ -19,13 +19,21 @@ using HashCTWModel = SequenceModel<HashVolf<AlphabetT::size>,
 
 template <typename AlphabetT>
 using SMUKNModel = SequenceModel<AmortizedSM<SMUKNHistogram<AlphabetT::size>>,
-                                            AlphabetT>;
+                                 AlphabetT>;
 template <typename AlphabetT>
 using HashSMUKNModel = SequenceModel<HashTopDown<SMUKNHistogram<AlphabetT::size>>,
-                                                AlphabetT>;
+                                     AlphabetT>;
+template <typename AlphabetT>
+using AmnesiaSMUKNModel = AmnesiaSequenceModel<AmortizedSM<SMUKNHistogram<AlphabetT::size>>,
+                                               AlphabetT>;
+
+
 template <typename AlphabetT>
 using SM1PFModel = SequenceModel<AmortizedSM<SM1PFHistogram<AlphabetT::size>>,
-                                            AlphabetT>;
+                                 AlphabetT>;
 template <typename AlphabetT>
 using HashSM1PFModel = SequenceModel<HashTopDown<SM1PFHistogram<AlphabetT::size>>,
-                                                AlphabetT>;
+                                     AlphabetT>;
+template <typename AlphabetT>
+using AmnesiaSM1PFModel = AmnesiaSequenceModel<AmortizedSM<SM1PFHistogram<AlphabetT::size>>,
+                                               AlphabetT>;

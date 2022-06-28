@@ -18,7 +18,7 @@ private:
     using ProbAr = std::array<double, num_children>;
     //using count_t = std::size_t;
     using count_t = uint8_t;
-    RescalingCounter<count_t, num_children> m_counter;
+    RescalingCounter<count_t, num_children> m_counter{};
     double m_beta{1.0};
     auto beta_tag() const {
         return m_beta / (static_cast<double>(num_children)/G_ALPHA
@@ -93,13 +93,13 @@ public:
 private:
     using Ptr_t = uint32_t;
     using ProbAr = std::array<double, size>;
-    std::vector<Node> m_vec;
-    std::unordered_map<Ptr_t, std::array<Ptr_t, size>> m_adj;
+    std::vector<Node> m_vec{};
+    std::unordered_map<Ptr_t, std::array<Ptr_t, size>> m_adj{};
     std::size_t m_depth;
     std::vector<Ptr_t> get_idx_chain(IdxContext const &ctx) const {
         std::vector<Ptr_t> idxs;
         idxs.reserve(m_depth);
-        auto idx = 0UL;
+        auto idx = 0U;
         idxs.push_back(idx);
         for (IdxContext c= ctx; c; c.pop()) {
             idx = m_adj.at(idx)[c.back()];
@@ -114,14 +114,15 @@ private:
     std::vector<Ptr_t> make_idx_chain(IdxContext const &ctx) {
         std::vector<Ptr_t> idxs;
         idxs.reserve(m_depth);
-        auto idx = 0UL;
+        auto idx = 0U;
         idxs.push_back(idx);
         for (IdxContext c = ctx; c; c.pop()) {
             auto child_idx = m_adj.at(idx)[c.back()];
             if (!child_idx) {
-                m_adj[idx][c.back()] = m_vec.size();
-                m_adj[m_vec.size()];
-                child_idx = m_vec.size();
+                auto new_idx = static_cast<Ptr_t>(m_vec.size());
+                m_adj[idx][c.back()] = new_idx;
+                m_adj[new_idx];
+                child_idx = new_idx;
                 m_vec.emplace_back();
             }
             idxs.push_back(child_idx);

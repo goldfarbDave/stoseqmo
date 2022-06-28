@@ -61,6 +61,8 @@ private:
     std::size_t m_ttot{};
     // Tracked externally along with depth
 public:
+    SMUKNHistogram(CoinFlipper &ref) {(void)ref;}
+
     ProbAr transform_probs(ProbAr const &parent_probs, std::size_t depth) const {
         // See Eq1.
         if (!m_ccounter.total()) {

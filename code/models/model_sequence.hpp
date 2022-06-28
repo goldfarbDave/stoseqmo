@@ -48,8 +48,10 @@ public:
     }
 };
 
-template <class ModelT, class Alphabet>
+template <class ModelT, class AlphabetT>
 class AmnesiaSequenceModel {
+public:
+    using Alphabet = AlphabetT;
 private:
     using sym_t = typename Alphabet::sym_t;
     MemoryDeque<idx_t> m_past_idxs;
