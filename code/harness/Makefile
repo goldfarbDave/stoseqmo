@@ -15,7 +15,7 @@ HEADER_FILES=\
 	models/model_utils.hpp \
 	models/model_sequence.hpp \
 	models/hashing.hpp \
-	models/hashsm.hpp \
+	models/hash_methods.hpp \
 	models/sequencememoizer.hpp \
 	models/volfctw.hpp
 
@@ -30,10 +30,10 @@ HEADERS=$(addprefix $(ROOT)/,$(HEADER_FILES))
 CPPFLAGS=-std=c++17 $(OPTFLAGS) $(WARNFLAGS) $(PTHREADFLAGS) -g $(INC) -DROOT_PATH=$(ROOT_IN_QUOTES)
 
 
-# all: correctness
-# 	./correctness
-all: calgary
-	./calgary | time tee calgary_rest_other.csv
+all: correctness
+	./correctness
+# all: calgary
+# 	./calgary | time tee calgary_rest_other.csv
 # all: shakespeare
 # 	./shakespeare | time tee shakespeare.csv
 
