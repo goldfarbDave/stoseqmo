@@ -39,10 +39,6 @@ void correctness_and_entropy_test(ModelCtorT ctor) {
 }
 
 int main() {
-    // limit_gb(3);
-    // correctness_and_entropy_test([]() {
-    //     return HashSMModel<ByteAlphabet>(1<<19, 10);
-    // });
     // correctness_and_entropy_test([]() {
     //     return VolfCTWModel<ByteAlphabet>(8);
     // });
@@ -59,20 +55,16 @@ int main() {
     //     return HashSMUKNModel<ByteAlphabet>(15, 30'000UL);
     // });
     // correctness_and_entropy_test([]() {
-    //     return AltHashSMUKNModel<ByteAlphabet>(15, 30'000UL);
-    // });
-    // correctness_and_entropy_test([]() {
     //     return SM1PFModel<ByteAlphabet>(15);
     // });
     // correctness_and_entropy_test([]() {
     //     return HashSM1PFModel<ByteAlphabet>(15, 30'000UL);
     // });
-    correctness_and_entropy_test([]() {
-        return  HashPureZCTXSMUKNModel<ByteAlphabet>(15, 30'000UL);
-    });
-
-
     // correctness_and_entropy_test([]() {
-    //     return  HashPureZCTXSM1PFModel<ByteAlphabet>(15, 30'000UL);
+    //     return  HashPureZCTXSMUKNModel<ByteAlphabet>(15, 30'000UL);
     // });
+
+    correctness_and_entropy_test([]() {
+        return  HashPureZCTXSM1PFModel<ByteAlphabet>(15, 30'000UL);
+    });
 }

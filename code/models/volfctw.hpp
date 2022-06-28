@@ -13,8 +13,9 @@
 constexpr double G_ALPHA{15.0};
 template <std::size_t num_children>
 class VolfHistogram {
-private:
+public:
     constexpr static std::size_t size = num_children;
+private:
     using ProbAr = std::array<double, num_children>;
     //using count_t = std::size_t;
     using count_t = uint8_t;
