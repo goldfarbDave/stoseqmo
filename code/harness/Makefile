@@ -1,9 +1,9 @@
 ROOT=..
-OPTFLAGS=-O3 -march=native -pg
+OPTFLAGS=-O3 -march=native
 WARNFLAGS=-Wall -Wextra -Wconversion -Wdisabled-optimization -Wlogical-op -Wmissing-include-dirs -Wredundant-decls -Wshadow -Wundef -Werror -Weffc++ -Wfatal-errors
 
-ASANFLAGS=-fno-omit-frame-pointer -fsanitize=address
-PTHREADFLAGS=-pthread -lpthread
+# ASANFLAGS=-fno-omit-frame-pointer -fsanitize=address
+# PTHREADFLAGS=-pthread -lpthread
 INC_DIRS= corpus utils coding/ac models harness
 HEADER_FILES=\
 	harness/models.hpp \
@@ -27,7 +27,7 @@ ROOT_IN_QUOTES=$(addprefix '",$(addsuffix "',$(ROOT)))
 INC=$(addprefix -I$(ROOT)/,$(INC_DIRS))
 HEADERS=$(addprefix $(ROOT)/,$(HEADER_FILES))
 
-CPPFLAGS=-std=c++17 $(OPTFLAGS) $(WARNFLAGS) $(PTHREADFLAGS) -g $(INC) -DROOT_PATH=$(ROOT_IN_QUOTES)
+CPPFLAGS=-std=c++17 $(OPTFLAGS) $(WARNFLAGS) $(PTHREADFLAGS) $(ASANFLAGS) -g $(INC) -DROOT_PATH=$(ROOT_IN_QUOTES)
 
 
 all: correctness

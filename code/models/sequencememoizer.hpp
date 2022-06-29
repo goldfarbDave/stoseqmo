@@ -75,7 +75,7 @@ public:
         return tmp;
     }
     static constexpr ProbAr get_prior() {
-        ProbAr ret;
+        ProbAr ret{};
         std::fill(ret.begin(), ret.end(), 1.0/num_children);
         return ret;
     }
@@ -131,7 +131,7 @@ public:
         return tmp;
     }
     static constexpr ProbAr get_prior() {
-        ProbAr ret;
+        ProbAr ret{};
         std::fill(ret.begin(), ret.end(), 1.0/num_children);
         return ret;
     }
@@ -192,8 +192,8 @@ private:
     inline static constexpr std::array<Ptr_t, size> mzeroinit{};
     using ProbAr = decltype(Node::get_prior());
     struct IdxAndProb {
-        Ptr_t idx;
-        ProbAr prob;
+        Ptr_t idx{};
+        ProbAr prob{};
     };
     auto get_prob_path(IdxContext const &ctx) {
         std::vector<IdxAndProb> cpps;

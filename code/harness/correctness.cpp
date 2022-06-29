@@ -9,8 +9,11 @@
 template <typename ModelCtorT>
 void correctness_and_entropy_test(ModelCtorT ctor) {
     static_assert(std::is_same_v<typename decltype(ctor())::Alphabet::sym_t,byte_t>);
-    auto contents = load_file_in_memory(cantbry_name_to_path.at("fields.c"));
-    // auto contents = load_file_in_memory(calgary_name_to_path.at("bib"));
+    // auto contents = load_file_in_memory(cantbry_name_to_path.at("fields.c"));
+    auto contents = load_file_in_memory(calgary_name_to_path.at("bib"));
+    // auto contents = load_file_in_memory(calgary_name_to_path.at("pic"));
+    // auto contents = load_file_in_memory(cantbry_name_to_path.at("kennedy.xls"));
+    // auto contents = load_shakespeare();
     BitVec compressed;
     {
         TimeSection ts{"Enc"};
@@ -54,12 +57,12 @@ int main() {
     // correctness_and_entropy_test([]() {
     //     return HashSMUKNModel<ByteAlphabet>(15, 30'000UL);
     // });
-    correctness_and_entropy_test([]() {
-        return SM1PFModel<ByteAlphabet>(8);
-    });
     // correctness_and_entropy_test([]() {
-    //     return HashSM1PFModel<ByteAlphabet>(8, 30'000UL);
+    //     return SM1PFModel<ByteAlphabet>(2);
     // });
+    correctness_and_entropy_test([]() {
+        return HashSM1PFModel<ByteAlphabet>(8, 30'000UL);
+    });
     // correctness_and_entropy_test([]() {
     //     return  HashPureZCTXSMUKNModel<ByteAlphabet>(15, 30'000UL);
     // });
