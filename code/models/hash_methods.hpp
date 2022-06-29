@@ -86,7 +86,8 @@ public:
     using hash_t = Key;
     using se_t = std::pair<std::size_t, std::size_t>;
     se_t make_bounded(std::size_t start, std::size_t end) const {
-        const auto lower = m_num_entries >> m_share_amount;
+        // Using num_entries/4 seems to be the best after a few runs over calgary
+        const auto lower = m_num_entries >> 2;
         const auto upper = m_num_entries;
         if (end <= start) return std::make_pair(lower, upper);
         return std::make_pair(std::min(lower, start),
@@ -95,7 +96,6 @@ public:
 public:
     std::size_t m_num_entries;
     std::size_t m_depth;
-    std::size_t m_share_amount;
     std::size_t m_start_seed{0};
 
     se_t start_and_end_from_depth(int depth) const {
@@ -106,11 +106,9 @@ public:
         auto end = (1UL << ((depth)*p))-1;
         return make_bounded(start, end);
     }
-    inline static auto g_share_amount{1ULL};
 public:
-    LengthBucketLookup(std::size_t depth_, std::size_t table_size) : m_num_entries{table_size}, m_depth{depth_}, m_share_amount{g_share_amount++} {
-        std::cout << "Share amount: " << m_share_amount << std::endl;
-    }
+    LengthBucketLookup(std::size_t depth_, std::size_t table_size) : m_num_entries{table_size}
+                                                                   , m_depth{depth_} {}
     std::size_t hash_to_idx(hash_t const& hash) const {
         auto [start, end] = start_and_end_from_depth(hash.depth);
         auto width = end-start;
@@ -129,6 +127,4 @@ public:
         }
         return ret;
     }
-
-
 };

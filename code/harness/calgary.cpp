@@ -126,8 +126,45 @@ LineItem do_amnesiasmukn(std::vector<byte_t> const &bytes, std::string const& na
     };
     return hsm_li;
 }
+LineItem do_lbhashctw(std::vector<byte_t> const &bytes, std::string const& name, int log_tab_size) {
+    auto res = entropy_of_model(bytes,
+                                LengthBucketHashCTWModel<ByteAlphabet>(DEPTH,
+                                                                         1UL<<log_tab_size));
+    LineItem hsm_li{.fn = name,
+                    .mn="LengthBucketHashCTW",
+                    .fs=bytes.size(),
+                    .ms=res.model.footprint(),
+                    .entropy=res.H
+    };
+    return hsm_li;
+}
+
+LineItem do_lbhashsm1pf(std::vector<byte_t> const &bytes, std::string const& name, int log_tab_size) {
+    auto res = entropy_of_model(bytes,
+                                LengthBucketHashSM1PFModel<ByteAlphabet>(DEPTH,
+                                                                         1UL<<log_tab_size));
+    LineItem hsm_li{.fn = name,
+                    .mn="LengthBucketHashSM1PF",
+                    .fs=bytes.size(),
+                    .ms=res.model.footprint(),
+                    .entropy=res.H
+    };
+    return hsm_li;
+}
+LineItem do_lbhashsmukn(std::vector<byte_t> const &bytes, std::string const& name, int log_tab_size) {
+    auto res = entropy_of_model(bytes,
+                                LengthBucketHashSMUKNModel<ByteAlphabet>(DEPTH,
+                                                                         1UL<<log_tab_size));
+    LineItem hsm_li{.fn = name,
+                    .mn="LengthBucketHashSMUKN",
+                    .fs=bytes.size(),
+                    .ms=res.model.footprint(),
+                    .entropy=res.H
+    };
+    return hsm_li;
+}
 int main() {
-    limit_gb(5);
+    //limit_gb(5);
     std::cout << LineItem{}.header() << std::endl;
     Threadpool tp(4);
 
@@ -143,16 +180,16 @@ int main() {
         //     auto const contents = load_file_in_memory(path);
         //     return do_hashctw(contents.bytes, name, i);
         // };
-        auto actwfunc = [name](int i) {
-            auto const path = calgary_name_to_path.at(name);
-            auto const contents = load_file_in_memory(path);
-            return do_amnesiactw(contents.bytes, name, i);
-        };
+        // auto actwfunc = [name](int i) {
+        //     auto const path = calgary_name_to_path.at(name);
+        //     auto const contents = load_file_in_memory(path);
+        //     return do_amnesiactw(contents.bytes, name, i);
+        // };
         // stvec.emplace_back([ctwfunc](){return ctwfunc();});
-        for (int i =7; i < 19; ++i) {
+        // for (int i =7; i < 19; ++i) {
             // stvec.emplace_back([hctwfunc, i](){return hctwfunc(i);});
-            stvec.emplace_back([actwfunc, i](){return actwfunc(i);});
-        }
+            // stvec.emplace_back([actwfunc, i](){return actwfunc(i);});
+        // }
 
         auto smuknfunc = [name]() {
             auto const path = calgary_name_to_path.at(name);
@@ -184,11 +221,28 @@ int main() {
             auto const contents = load_file_in_memory(path);
             return do_amnesiasm1pf(contents.bytes, name, i);
         };
+        auto lbhctwfunc = [name](int i) {
+            auto const path = calgary_name_to_path.at(name);
+            auto const contents = load_file_in_memory(path);
+            return do_lbhashctw(contents.bytes, name, i);
+        };
+        auto lbhsmuknfunc = [name](int i) {
+            auto const path = calgary_name_to_path.at(name);
+            auto const contents = load_file_in_memory(path);
+            return do_lbhashsmukn(contents.bytes, name, i);
+        };
+        auto lbhsm1pffunc = [name](int i) {
+            auto const path = calgary_name_to_path.at(name);
+            auto const contents = load_file_in_memory(path);
+            return do_lbhashsm1pf(contents.bytes, name, i);
+        };
         // stvec.emplace_back([smuknfunc](){return smuknfunc();});
-        // for (int i=7; i < 19; ++i) {
-        //     stvec.emplace_back([asmuknfunc, i](){return asmuknfunc(i);});
-        //     stvec.emplace_back([asm1pffunc, i](){return asm1pffunc(i);});
-        // }
+        for (int i=7; i < 19; ++i) {
+            stvec.emplace_back([lbhctwfunc, i](){return lbhctwfunc(i);});
+            stvec.emplace_back([lbhsmuknfunc, i](){return lbhsmuknfunc(i);});
+            stvec.emplace_back([lbhsm1pffunc, i](){return lbhsm1pffunc(i);});
+
+        }
         // stvec.emplace_back([sm1pffunc](){return sm1pffunc();});
     }
 

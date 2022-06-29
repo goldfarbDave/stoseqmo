@@ -52,6 +52,12 @@ using HashPureZCTXSMUKNModel = SequenceModel<
         PureZCTXLookup,
         SMUKNHistogram<AlphabetT::size>>,
     AlphabetT>;
+template <typename AlphabetT>
+using LengthBucketHashSMUKNModel = SequenceModel<
+    HasherTopDown<
+        LengthBucketLookup,
+        SMUKNHistogram<AlphabetT::size>>,
+    AlphabetT>;
 
 // 1PF
 template <typename AlphabetT>
@@ -79,4 +85,10 @@ using HashPureZCTXSM1PFModel = SequenceModel<
         PureZCTXLookup,
         SM1PFHistogram<
             AlphabetT::size>>,
+    AlphabetT>;
+template <typename AlphabetT>
+using LengthBucketHashSM1PFModel = SequenceModel<
+    HasherTopDown<
+        LengthBucketLookup,
+        SM1PFHistogram<AlphabetT::size>>,
     AlphabetT>;
