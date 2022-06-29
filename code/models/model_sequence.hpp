@@ -24,24 +24,34 @@ template <class ModelT, class AlphabetT>
 class SequenceModel {
 public:
     using Alphabet = AlphabetT;
+
 private:
     using sym_t = typename Alphabet::sym_t;
     MemoryDeque<idx_t> m_past_idxs;
     ModelT m_underlying;
+    using ProbAr = decltype(m_underlying.get_probs(m_past_idxs.view()));
+    mutable ProbAr m_cached{};
+    mutable bool m_valid{};
 public:
 
     template <typename... Args>
     SequenceModel(std::size_t depth, Args&&... args)
         : m_past_idxs{depth}
         , m_underlying{depth, std::forward<Args>(args)...} {}
-    auto get_probs() const {
-        return m_underlying.get_probs(m_past_idxs.view());
+    ProbAr get_probs() const {
+        if (m_valid) {
+            return m_cached;
+        }
+        m_cached = m_underlying.get_probs(m_past_idxs.view());
+        m_valid = true;
+        return m_cached;
     }
     void learn(sym_t sym) {
         auto idx = Alphabet::to_idx(sym);
         auto view = m_past_idxs.view();
         m_underlying.learn(view, idx);
         m_past_idxs.push_back(idx);
+        m_valid=false;
     }
     Footprint footprint() const {
         return m_underlying.footprint();

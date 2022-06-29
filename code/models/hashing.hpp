@@ -17,7 +17,7 @@ private:
     std::size_t m_depth{};
     HashLookupT m_hasher;
     std::vector<Node> m_table;
-    using ProbAr = std::array<double, size>;
+    using ProbAr = decltype(Node::get_prior());
     Node& lookup(hash_t const& hash) {
         return m_table[m_hasher.hash_to_idx(hash)];
     }
@@ -74,7 +74,7 @@ private:
     HashLookupT m_hasher;
     std::unique_ptr<CoinFlipper> m_flip{std::make_unique<CoinFlipper>()};
     std::vector<Node> m_table;
-    using ProbAr = std::array<double, size>;
+    using ProbAr = decltype(Node::get_prior());
     Node& lookup(hash_t const &hash) {
         return m_table[m_hasher.hash_to_idx(hash)];
     }

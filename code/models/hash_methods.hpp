@@ -76,28 +76,28 @@ public:
 // Let's only let equal-sized contexts share the same buckets, and
 // then do random allocation from there.
 // It seems reasonable to give exponential spacing?
-class LengthBucketLookup {
-private:
-    struct Key {
-        int depth;
-        std::size_t hash;
-    };
-public:
-    using hash_t = Key;
-private:
-    std::size_t num_entries;
-    std::size_t depth;
-    std::pair<std::size_t, std::size_t> start_and_end_from_depth(std::size_t dep) {
+// class LengthBucketLookup {
+// private:
+//     struct Key {
+//         int depth;
+//         std::size_t hash;
+//     };
+// public:
+//     using hash_t = Key;
+// private:
+//     std::size_t num_entries;
+//     std::size_t depth;
+//     std::pair<std::size_t, std::size_t> start_and_end_from_depth(std::size_t dep) {
 
-    }
-public:
-    LengthBucketLookup(std::size_t depth, std::size_t table_size) : num_entries{table_size}, depth{depth} {}
-    std::size_t hash_to_idx(hash_t const& hash) const {
+//     }
+// public:
+//     LengthBucketLookup(std::size_t depth, std::size_t table_size) : num_entries{table_size}, depth{depth} {}
+//     std::size_t hash_to_idx(hash_t const& hash) const {
 
-    }
-    std::vector<hash_t> ctx_to_hashes(IdxContext ctx) const {
+//     }
+//     std::vector<hash_t> ctx_to_hashes(IdxContext ctx) const {
 
-    }
+//     }
 
 
-}
+// };

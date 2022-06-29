@@ -21,29 +21,23 @@
 
 
 
+using prob_t = float;
 class CoinFlipper {
     // using gen_t = std::mt19937_64;
     // using gen_t = std::mt19937;
     using gen_t = std::minstd_rand;
     gen_t m_gen{0};
 public:
-    bool operator()(double prob) {
+    bool operator()(prob_t prob) {
         std::bernoulli_distribution dist{prob};
         return dist(m_gen);
     }
 };
 
 
-template <typename C>
-double sum(C const &cont) {
-    return std::accumulate(cont.cbegin(), cont.cend(), 0.0, [](double acc, const auto &el) {
-        return acc + el;
-    });
-}
-
-double get_init_discount(std::size_t depth) {
+prob_t get_init_discount(std::size_t depth) {
     // Values from footnote 2
-    static constexpr std::array<double, 11> g_discount_ar{0.05, 0.7, 0.8, 0.82, 0.84, 0.88, 0.91, 0.92, 0.93, 0.94, 0.95};
+    static constexpr std::array<prob_t, 11> g_discount_ar{0.05f, 0.7f, 0.8f, 0.82f, 0.84f, 0.88f, 0.91f, 0.92f, 0.93f, 0.94f, 0.95f};
     // Clamp at end of discount ar
     auto idx = std::min(depth, g_discount_ar.size() - 1);
     return g_discount_ar[idx];
@@ -54,7 +48,7 @@ class SMUKNHistogram {
 public:
     static constexpr std::size_t size = num_children;
     using count_t = std::uint8_t;
-    using ProbAr = std::array<double, num_children>;
+    using ProbAr = std::array<prob_t, num_children>;
 private:
     RescalingCounter<count_t, num_children> m_ccounter{};
     std::array<count_t, num_children> m_ts{};
@@ -74,9 +68,9 @@ public:
             tmp[i] = (m_ccounter[i]
                       - discount*m_ts[i]
                       + (discount
-                         * static_cast<double>(m_ttot)
+                         * static_cast<prob_t>(m_ttot)
                          * parent_probs[i]))
-                / static_cast<double>(m_ccounter.total());
+                / static_cast<prob_t>(m_ccounter.total());
         }
         return tmp;
     }
@@ -103,7 +97,7 @@ class SM1PFHistogram {
 public:
     static constexpr std::size_t size = num_children;
     using count_t = std::uint8_t;
-    using ProbAr = std::array<double, num_children>;
+    using ProbAr = std::array<prob_t, num_children>;
 private:
     RescalingCounter<count_t, num_children> m_ccounter{};
     RescalingCounter<count_t, num_children> m_tcounter{};
@@ -119,13 +113,14 @@ public:
         }
         auto const discount = get_init_discount(depth);
         ProbAr tmp;
-        auto acc =0.0;
+        auto acc = static_cast<prob_t>(0.0);
         for (auto i =0UL; i < tmp.size(); ++i) {
-            tmp[i] = (std::max(m_ccounter[i] - (discount*m_tcounter[i]), 0.0)
+            tmp[i] = (std::max(m_ccounter[i] - (discount*m_tcounter[i]),
+                               static_cast<prob_t>(0.0))
                       + (discount
-                         * static_cast<double>(m_tcounter.total())
-                         * parent_probs[i]))
-                / static_cast<double>(m_ccounter.total());
+                         * static_cast<prob_t>(m_tcounter.total())
+                         * parent_probs[i]));
+                // / static_cast<prob_t>(m_ccounter.total());
 
             acc += tmp[i];
         }
@@ -150,7 +145,7 @@ public:
             return false;
         }
         auto const discount = get_init_discount(depth);
-        auto const numer = discount * static_cast<double>(m_tcounter.total()) * parent_probs[sym];
+        auto const numer = discount * static_cast<prob_t>(m_tcounter.total()) * parent_probs[sym];
         auto const denom = m_ccounter[sym] - (discount * m_tcounter[sym]) + (numer);
         if (m_flip(numer/denom)) {
             m_tcounter.increment(sym);
@@ -195,7 +190,7 @@ private:
     // we're moved-from)
     std::unique_ptr<CoinFlipper> m_flip{std::make_unique<CoinFlipper>()};
     inline static constexpr std::array<Ptr_t, size> mzeroinit{};
-    using ProbAr = std::array<double, size>;
+    using ProbAr = decltype(Node::get_prior());
     struct IdxAndProb {
         Ptr_t idx;
         ProbAr prob;

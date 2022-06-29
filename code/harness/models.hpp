@@ -22,11 +22,11 @@ using HashCTWModel = SequenceModel<
         RandomLookup,
         VolfHistogram<AlphabetT::size>>,
     AlphabetT>;
-using LengthBucketHashCTWModel = SequenceModel<
-    HasherBottomUp<
-        LengthBucketLookup,
-        VolfHistogram<AlphabetT::size>>,
-    AlphabetT>;
+// using LengthBucketHashCTWModel = SequenceModel<
+//     HasherBottomUp<
+//         LengthBucketLookup,
+//         VolfHistogram<AlphabetT::size>>,
+//     AlphabetT>;
 
 // UKN
 template <typename AlphabetT>

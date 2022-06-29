@@ -1,5 +1,5 @@
 ROOT=..
-OPTFLAGS=-O3 -march=native
+OPTFLAGS=-O3 -march=native -pg
 WARNFLAGS=-Wall -Wextra -Wconversion -Wdisabled-optimization -Wlogical-op -Wmissing-include-dirs -Wredundant-decls -Wshadow -Wundef -Werror -Weffc++ -Wfatal-errors
 
 ASANFLAGS=-fno-omit-frame-pointer -fsanitize=address

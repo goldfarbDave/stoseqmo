@@ -54,16 +54,16 @@ int main() {
     // correctness_and_entropy_test([]() {
     //     return HashSMUKNModel<ByteAlphabet>(15, 30'000UL);
     // });
+    correctness_and_entropy_test([]() {
+        return SM1PFModel<ByteAlphabet>(8);
+    });
     // correctness_and_entropy_test([]() {
-    //     return SM1PFModel<ByteAlphabet>(15);
-    // });
-    // correctness_and_entropy_test([]() {
-    //     return HashSM1PFModel<ByteAlphabet>(15, 30'000UL);
+    //     return HashSM1PFModel<ByteAlphabet>(8, 30'000UL);
     // });
     // correctness_and_entropy_test([]() {
     //     return  HashPureZCTXSMUKNModel<ByteAlphabet>(15, 30'000UL);
     // });
-    correctness_and_entropy_test([]() {
-        return  HashPureZCTXSM1PFModel<ByteAlphabet>(15, 30'000UL);
-    });
+    // correctness_and_entropy_test([]() {
+    //     return  HashPureZCTXSM1PFModel<ByteAlphabet>(15, 30'000UL);
+    // });
 }
