@@ -16,7 +16,7 @@ class VolfHistogram {
 public:
     constexpr static std::size_t size = num_children;
 private:
-    using ProbAr = std::array<double, num_children>;
+    using ProbAr = std::array<prob_t, num_children>;
     //using count_t = std::size_t;
     using count_t = uint8_t;
     RescalingCounter<count_t, num_children> m_counter{};
@@ -55,21 +55,21 @@ public:
                        });
         return tmp;
     }
-    ProbAr learn(idx_t sym) {
+    ProbAr learn(idx_t sym, std::size_t /*depth*/) {
         // Called in the leaf node case
         auto ret = get_probs();
         update_counts(sym);
         return ret;
     }
-    ProbAr learn(idx_t sym, ProbAr const& child_probs) {
+    ProbAr learn(idx_t sym, ProbAr const& child_probs, std::size_t depth) {
         // Internal node case
         auto const child_pw = child_probs[sym];
-        auto ret = transform_probs(child_probs);
+        auto ret = transform_probs(child_probs, depth);
         update_beta(m_counter[sym], child_pw);
         update_counts(sym);
         return ret;
     }
-    ProbAr transform_probs(ProbAr const &child_probs) const {
+    ProbAr transform_probs(ProbAr const &child_probs, std::size_t /*depth*/) const {
         ProbAr tmp;
         auto sum = 0.0;
         std::transform(child_probs.begin(), child_probs.end(), m_counter.begin(), tmp.begin(),
@@ -85,15 +85,19 @@ public:
         return tmp;
     }
 };
-
-template <std::size_t N>
-class AmortizedVolf {
-public:
-    static constexpr std::size_t size = N;
-    using Node=VolfHistogram<size>;
+template <typename T, typename =void>
+struct has_get_probs : std::false_type {};
+template <typename T>
+struct has_get_probs<T, std::void_t<decltype(T::counter())>> : std::true_type {};
+template <typename T>
+inline constexpr bool has_get_probs_v = has_get_probs<T>::value;
+template <typename HistogramT>
+class TopDownExact {
+    using Node=HistogramT;
 private:
+    constexpr static size_t size = Node::size;
     using Ptr_t = uint32_t;
-    using ProbAr = std::array<double, size>;
+    using ProbAr = decltype(Node::get_prior());
     std::vector<Node> m_vec{};
     std::unordered_map<Ptr_t, std::array<Ptr_t, size>> m_adj{};
     std::size_t m_depth;
@@ -132,7 +136,7 @@ private:
         return idxs;
     }
 public:
-    AmortizedVolf(std::size_t depth) : m_depth{depth} {
+    TopDownExact(std::size_t depth) : m_depth{depth} {
         m_vec.reserve(1<<15);
         m_vec.emplace_back();
         m_adj.reserve(1<<15);
@@ -141,24 +145,32 @@ public:
     ProbAr get_probs(IdxContext const &ctx) const {
         auto idxs = get_idx_chain(ctx);
         ProbAr ret;
-        if (idxs.size() <= ctx.size()+1) {
-            ret = m_vec[idxs.back()].get_probs();
-            idxs.pop_back();
+        if constexpr (has_get_probs_v<Node>) {
+            if (idxs.size() <= ctx.size()+1) {
+                ret = m_vec[idxs.back()].get_probs();
+                idxs.pop_back();
+            } else {
+                ret = Node::get_prior();
+            }
         } else {
             ret = Node::get_prior();
         }
-        return std::accumulate(idxs.crbegin(), idxs.crend(), ret,
-                               [this](ProbAr const& probar, auto const &idx){
-                                   return m_vec[idx].transform_probs(probar);
+        auto depth = std::distance(idxs.crbegin(), idxs.crend());
+        ret = std::accumulate(idxs.crbegin(), idxs.crend(), ret,
+                               [this, &depth](ProbAr const& probar, auto const &idx){
+                                   return m_vec[idx].transform_probs(probar, --depth);
                                });
+        assert(depth == 0);
+        return ret;
     }
     void learn(IdxContext const &ctx, idx_t sym) {
+        auto depth = ctx.size()+1;
         auto idxs = make_idx_chain(ctx);
         std::accumulate(std::next(idxs.crbegin()),
                         idxs.crend(),
-                        m_vec[idxs.back()].learn(sym),
-                        [this, sym](ProbAr const &acc, auto const &idx) {
-                            return m_vec[idx].learn(sym, acc);
+                        m_vec[idxs.back()].learn(sym, depth--),
+                        [this, sym, &depth](ProbAr const &acc, auto const &idx) {
+                            return m_vec[idx].learn(sym, acc, depth--);
                         });
     }
 

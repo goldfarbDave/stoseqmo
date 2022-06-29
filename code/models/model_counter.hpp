@@ -6,15 +6,17 @@ template <typename CountT, std::size_t N>
 class RescalingCounter {
     std::array<CountT, N> m_data{};
     std::size_t m_tot{};
+    std::size_t m_uniq{};
     constexpr static CountT RESCALE_THRESHOLD = std::numeric_limits<CountT>::max();
 public:
     void increment(idx_t sym) {
+        m_uniq += !m_data[sym];
         m_data[sym] += 1;
         m_tot += 1;
         if (m_data[sym] == RESCALE_THRESHOLD) {
             auto new_total = 0;
             std::transform(m_data.begin(), m_data.end(), m_data.begin(),
-                           [this, &new_total](auto const &el) {
+                           [&new_total](auto const &el) {
                                // Divide by 2, round up
                                auto nc =(el >> 1) + (el & 1);
                                new_total += nc;
@@ -23,8 +25,14 @@ public:
             m_tot = new_total;
         }
     }
+    bool indicator(idx_t sym) const {
+        return m_data[sym];
+    }
     std::size_t total() const {
         return m_tot;
+    }
+    std::size_t unique() const {
+        return m_uniq;
     }
     CountT operator[](idx_t sym) const {
         return m_data[sym];

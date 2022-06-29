@@ -1,6 +1,7 @@
 #pragma once
 #include "model_sequence.hpp"
 #include "volfctw.hpp"
+#include "ppmdp.hpp"
 #include "sequencememoizer.hpp"
 #include "hashing.hpp"
 #include "hash_methods.hpp"
@@ -8,13 +9,13 @@
 // CTW
 template <typename AlphabetT>
 using VolfCTWModel = SequenceModel<
-    AmortizedVolf<
-        AlphabetT::size>,
+    TopDownExact<
+        VolfHistogram<AlphabetT::size>>,
     AlphabetT>;
 template <typename AlphabetT>
 using AmnesiaVolfCTWModel= AmnesiaSequenceModel<
-    AmortizedVolf<
-        AlphabetT::size>,
+    TopDownExact<
+        VolfHistogram<AlphabetT::size>>,
     AlphabetT>;
 template <typename AlphabetT>
 using HashCTWModel = SequenceModel<
@@ -28,6 +29,13 @@ using LengthBucketHashCTWModel = SequenceModel<
         LengthBucketLookup,
         VolfHistogram<AlphabetT::size>>,
     AlphabetT>;
+template <typename AlphabetT>
+using DepthSeededHashCTWModel = SequenceModel<
+    HasherBottomUp<
+        DepthSeededLookup,
+        VolfHistogram<AlphabetT::size>>,
+    AlphabetT>;
+
 
 // UKN
 template <typename AlphabetT>
@@ -56,6 +64,12 @@ template <typename AlphabetT>
 using LengthBucketHashSMUKNModel = SequenceModel<
     HasherTopDown<
         LengthBucketLookup,
+        SMUKNHistogram<AlphabetT::size>>,
+    AlphabetT>;
+template <typename AlphabetT>
+using DepthSeededHashSMUKNModel = SequenceModel<
+    HasherTopDown<
+        DepthSeededLookup,
         SMUKNHistogram<AlphabetT::size>>,
     AlphabetT>;
 
@@ -92,3 +106,102 @@ using LengthBucketHashSM1PFModel = SequenceModel<
         LengthBucketLookup,
         SM1PFHistogram<AlphabetT::size>>,
     AlphabetT>;
+template <typename AlphabetT>
+using DepthSeededHashSM1PFModel = SequenceModel<
+    HasherTopDown<
+        DepthSeededLookup,
+        SM1PFHistogram<AlphabetT::size>>,
+    AlphabetT>;
+
+
+
+template <typename AlphabetT>
+using PPMDPModel = SequenceModel<
+    TopDownExact<
+        PPMDPHistogram<AlphabetT::size>>,
+    AlphabetT>;
+
+
+// NB SM variants
+// NBUKN
+// template <std::size_t size>
+// using NBSMUKNHistogram = SMUKNHistogram<size, false>;
+// template <std::size_t size>
+// using NBSM1PFHistogram = SM1PFHistogram<size, false>;
+// template <typename AlphabetT>
+// using NBSMUKNModel = SequenceModel<
+//     AmortizedSM<
+//         NBSMUKNHistogram<
+//             AlphabetT::size>>,
+//     AlphabetT>;
+// template <typename AlphabetT>
+// using HashNBSMUKNModel = SequenceModel<
+//     HasherTopDown<
+//         RandomLookup,
+//         NBSMUKNHistogram<
+//             AlphabetT::size>>,
+//     AlphabetT>;
+// template <typename AlphabetT>
+// using AmnesiaNBSMUKNModel = AmnesiaSequenceModel<
+//     AmortizedSM<
+//         NBSMUKNHistogram<
+//             AlphabetT::size>>,
+//     AlphabetT>;
+// template <typename AlphabetT>
+// using HashPureZCTXNBSMUKNModel = SequenceModel<
+//     HasherTopDown<
+//         PureZCTXLookup,
+//         NBSMUKNHistogram<
+//             AlphabetT::size>>,
+//     AlphabetT>;
+// template <typename AlphabetT>
+// using LengthBucketHashNBSMUKNModel = SequenceModel<
+//     HasherTopDown<
+//         LengthBucketLookup,
+//         NBSMUKNHistogram<AlphabetT::size>>,
+//     AlphabetT>;
+// template <typename AlphabetT>
+// using DepthSeededHashNBSMUKNModel = SequenceModel<
+//     HasherTopDown<
+//         DepthSeededLookup,
+//         NBSMUKNHistogram<AlphabetT::size>>,
+//     AlphabetT>;
+// // NB1PF
+// template <typename AlphabetT>
+// using NBSM1PFModel = SequenceModel<
+//     AmortizedSM<
+//         NBSM1PFHistogram<
+//             AlphabetT::size>>,
+//     AlphabetT>;
+// template <typename AlphabetT>
+// using HashNBSM1PFModel = SequenceModel<
+//     HasherTopDown<
+//         RandomLookup,
+//         NBSM1PFHistogram<
+//             AlphabetT::size>>,
+//     AlphabetT>;
+// template <typename AlphabetT>
+// using AmnesiaNBSM1PFModel = AmnesiaSequenceModel<
+//     AmortizedSM<
+//         NBSM1PFHistogram<
+//             AlphabetT::size>>,
+//     AlphabetT>;
+// template <typename AlphabetT>
+// using HashPureZCTXNBSM1PFModel = SequenceModel<
+//     HasherTopDown<
+//         PureZCTXLookup,
+//         NBSM1PFHistogram<
+//             AlphabetT::size>>,
+//     AlphabetT>;
+// template <typename AlphabetT>
+// using LengthBucketHashNBSM1PFModel = SequenceModel<
+//     HasherTopDown<
+//         LengthBucketLookup,
+//         NBSM1PFHistogram<AlphabetT::size>>,
+//     AlphabetT>;
+// template <typename AlphabetT>
+// using DepthSeededHashNBSM1PFModel = SequenceModel<
+//     HasherTopDown<
+//         DepthSeededLookup,
+//         NBSM1PFHistogram<AlphabetT::size>>,
+//     AlphabetT>;

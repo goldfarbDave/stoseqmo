@@ -129,7 +129,7 @@ LineItem do_amnesiasmukn(std::vector<byte_t> const &bytes, std::string const& na
 LineItem do_lbhashctw(std::vector<byte_t> const &bytes, std::string const& name, int log_tab_size) {
     auto res = entropy_of_model(bytes,
                                 LengthBucketHashCTWModel<ByteAlphabet>(DEPTH,
-                                                                         1UL<<log_tab_size));
+                                                                       1UL<<log_tab_size));
     LineItem hsm_li{.fn = name,
                     .mn="LengthBucketHashCTW",
                     .fs=bytes.size(),

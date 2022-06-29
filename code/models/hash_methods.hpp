@@ -15,10 +15,12 @@ public:
     using hash_t = size_t;
 private:
     std::size_t num_entries;
-    std::size_t depth;
+    //std::size_t depth;
     std::size_t start_seed{0};
 public:
-    RandomLookup(std::size_t depth_, std::size_t table_size) : num_entries{table_size}, depth{depth_} {}
+    RandomLookup(std::size_t /*depth_*/, std::size_t table_size) : num_entries{table_size}
+                                                                   //, depth{depth_}
+        {}
     std::vector<hash_t> ctx_to_hashes(IdxContext ctx) const {
         std::vector<std::size_t> ret;
         ret.reserve(ctx.size()+1);
@@ -39,7 +41,7 @@ public:
     using hash_t = size_t;
 private:
     std::size_t num_entries;
-    std::size_t depth;
+    //std::size_t depth;
     std::size_t start_seed{0};
 
     template <class T>
@@ -51,7 +53,9 @@ private:
         }
     }
 public:
-    PureZCTXLookup(std::size_t depth_, std::size_t table_size) : num_entries{table_size}, depth{depth_} {}
+    PureZCTXLookup(std::size_t /*depth_*/, std::size_t table_size) : num_entries{table_size}
+                                                                   // , depth{depth_}
+        {}
     std::vector<hash_t> ctx_to_hashes(IdxContext ctx) const {
         std::vector<hash_t> ret;
         ret.reserve(ctx.size()+1);
@@ -120,11 +124,51 @@ public:
         ret.reserve(ctx.size()+1);
         auto seed{m_start_seed};
         auto depth{0};
-        ret.push_back(Key{.depth=depth++, seed});
+        ret.push_back(Key{.depth=depth++, .hash=seed});
         while (ctx) {
             hash_combine(seed, ctx.pop());
-            ret.push_back(Key{.depth=depth++, seed});
+            ret.push_back(Key{.depth=depth++, .hash=seed});
         }
         return ret;
+    }
+};
+
+class DepthSeededLookup {
+public:
+    using hash_t = size_t;
+private:
+    std::size_t m_num_entries;
+    std::size_t m_depth;
+    std::vector<size_t> m_inits{};
+public:
+    DepthSeededLookup(std::size_t depth_, std::size_t table_size) : m_num_entries{table_size}, m_depth{depth_} {
+        /*
+          Initial value from:
+          (progn
+          (random "seed")
+          (random (1- (ash 1 64))))
+         */
+        auto seed{13678653399469710531UL};
+        m_inits.push_back(seed);
+        for (auto i =0UL; i < m_depth; i++) {
+            hash_combine(seed, i);
+            m_inits.push_back(seed);
+        }
+    }
+    std::vector<hash_t> ctx_to_hashes(IdxContext ctx) const {
+        std::vector<std::size_t> ret;
+        auto depth = 0UL;
+        ret.reserve(ctx.size()+1);
+        auto seed{m_inits[depth++]};
+        ret.push_back(seed);
+        while (ctx) {
+            hash_combine(seed, m_inits[depth++]);
+            hash_combine(seed, ctx.pop());
+            ret.push_back(seed);
+        }
+        return ret;
+    }
+    std::size_t hash_to_idx(hash_t const &hash) const {
+        return hash % m_num_entries;
     }
 };

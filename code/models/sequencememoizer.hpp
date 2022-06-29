@@ -19,9 +19,6 @@
 #include "model_mem.hpp"
 #include "model_sequence.hpp"
 
-
-
-using prob_t = float;
 class CoinFlipper {
     // using gen_t = std::mt19937_64;
     // using gen_t = std::mt19937;
@@ -37,12 +34,12 @@ public:
 
 prob_t get_init_discount(std::size_t depth) {
     // Values from footnote 2
-    static constexpr std::array<prob_t, 11> g_discount_ar{0.05f, 0.7f, 0.8f, 0.82f, 0.84f, 0.88f, 0.91f, 0.92f, 0.93f, 0.94f, 0.95f};
+    static constexpr std::array<prob_t, 11> discount_ar{0.05f, 0.7f, 0.8f, 0.82f, 0.84f, 0.88f, 0.91f, 0.92f, 0.93f, 0.94f, 0.95f};
     // Clamp at end of discount ar
-    auto idx = std::min(depth, g_discount_ar.size() - 1);
-    return g_discount_ar[idx];
+    auto idx = std::min(depth, discount_ar.size() - 1);
+    return discount_ar[idx];
 }
-template <std::size_t num_children>
+template <std::size_t num_children, bool breaking=true>
 class SMUKNHistogram {
     // Uses "Unbounded-depth Kneser-Ney" technique
 public:
@@ -86,12 +83,16 @@ public:
         // Flip T, see old value. In Chinese Restaurant Parlance: we didn't make a new table
         auto old_t = std::exchange(m_ts[sym], 1);
         m_ttot += !old_t;
-        return old_t;
+        if constexpr(breaking) {
+            return old_t;
+        } else {
+            return false;
+        }
     }
 };
 
 
-template <std::size_t num_children>
+template <std::size_t num_children, bool breaking=true>
 class SM1PFHistogram {
     // Uses "probabilistic updates" method, dubbed 1PF
 public:
@@ -115,13 +116,11 @@ public:
         ProbAr tmp;
         auto acc = static_cast<prob_t>(0.0);
         for (auto i =0UL; i < tmp.size(); ++i) {
-            tmp[i] = (std::max(m_ccounter[i] - (discount*m_tcounter[i]),
+            auto const t = m_tcounter[i];
+            auto const ts = static_cast<prob_t>(m_tcounter.total());
+            tmp[i] = (std::max(m_ccounter[i] - (discount*t),
                                static_cast<prob_t>(0.0))
-                      + (discount
-                         * static_cast<prob_t>(m_tcounter.total())
-                         * parent_probs[i]));
-                // / static_cast<prob_t>(m_ccounter.total());
-
+                      + (discount * ts * parent_probs[i]));
             acc += tmp[i];
         }
         std::transform(tmp.begin(), tmp.end(), tmp.begin(), [acc](auto const& el) {
@@ -139,11 +138,13 @@ public:
     bool update_counts(idx_t sym, ProbAr const& parent_probs, std::size_t depth) {
         // Unconditionally increment C
         m_ccounter.increment(sym);
+
         // More sophisticated update:
         if (!m_tcounter[sym]) {
             m_tcounter.increment(sym);
             return false;
         }
+
         auto const discount = get_init_discount(depth);
         auto const numer = discount * static_cast<prob_t>(m_tcounter.total()) * parent_probs[sym];
         auto const denom = m_ccounter[sym] - (discount * m_tcounter[sym]) + (numer);
@@ -151,19 +152,10 @@ public:
             m_tcounter.increment(sym);
             return false;
         }
-        // If unchanged, break
-        return true;
-
-
+        return breaking;
     }
 };
 
-// template <typename T, typename =void>
-// struct needs_gen : std::false_type {};
-// template <typename T>
-// struct needs_gen<T, std::void_t<decltype(std::declval<T>().gen_ptr)>> : std::true_type {};
-// template <typename T>
-// inline constexpr bool needs_gen_v = needs_gen<T>::value;
 
 // Amortizes node allocation through std::vector resize semantics
 template <typename HistogramT>

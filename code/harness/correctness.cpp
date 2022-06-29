@@ -20,6 +20,7 @@ void correctness_and_entropy_test(ModelCtorT ctor) {
         StreamingACEnc ac(compressed, ctor());
         for (auto const &sym: contents.bytes) {
             ac.encode(sym);
+
         }
     }
     auto compressed_size = static_cast<double>(compressed.size());
@@ -48,31 +49,39 @@ int main() {
     // correctness_and_entropy_test([]() {
     //     return AmnesiaVolfCTWModel<ByteAlphabet>(8, 20'000);
     // });
-    correctness_and_entropy_test([]() {
-        return HashCTWModel<ByteAlphabet>(8, 24983UL);
-    });
-    correctness_and_entropy_test([]() {
-        return LengthBucketHashCTWModel<ByteAlphabet>(8, 24983UL);
-    });
-
     // correctness_and_entropy_test([]() {
-    //     return SMUKNModel<ByteAlphabet>(15);
+    //     return HashCTWModel<ByteAlphabet>(8, 24983UL);
+    // });
+    // correctness_and_entropy_test([]() {
+    //     return DepthSeededHashCTWModel<ByteAlphabet>(8, 24983UL);
+    // });
+    // correctness_and_entropy_test([]() {
+    //     return SM1PFModel<ByteAlphabet>(8);
     // });
     correctness_and_entropy_test([]() {
-        return HashSMUKNModel<ByteAlphabet>(8, 30'000UL);
-    });
-    correctness_and_entropy_test([]() {
-        return LengthBucketHashSMUKNModel<ByteAlphabet>(8, 30'000UL);
+        return PPMDPModel<ByteAlphabet>(8);
     });
     // correctness_and_entropy_test([]() {
-    //     return SM1PFModel<ByteAlphabet>(2);
+    //     return HashSM1PFModel<ByteAlphabet>(8, 10'000UL);
     // });
-    correctness_and_entropy_test([]() {
-        return HashSM1PFModel<ByteAlphabet>(8, 30'000UL);
-    });
-    correctness_and_entropy_test([]() {
-        return LengthBucketHashSM1PFModel<ByteAlphabet>(8, 30'000UL);
-    });
+    // correctness_and_entropy_test([]() {
+    //     return NBSM1PFModel<ByteAlphabet>(8);
+    // });
+    // correctness_and_entropy_test([]() {
+    //     return HashNBSM1PFModel<ByteAlphabet>(8, 10'000UL);
+    // });
+    // correctness_and_entropy_test([]() {
+    //     return DepthSeededHashNBSM1PFModel<ByteAlphabet>(8, 10'000UL);
+    // });
+    // correctness_and_entropy_test([]() {
+    //     return NBSM1PFModel<ByteAlphabet>(2);
+    // });
+    // correctness_and_entropy_test([]() {
+    //     return HashNBSM1PFModel<ByteAlphabet>(8, 30'000UL);
+    // });
+    // correctness_and_entropy_test([]() {
+    //     return DepthSeededHashNBSM1PFModel<ByteAlphabet>(8, 30'000UL);
+    // });
     // correctness_and_entropy_test([]() {
     //     return  HashPureZCTXSMUKNModel<ByteAlphabet>(15, 30'000UL);
     // });

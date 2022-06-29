@@ -1,9 +1,11 @@
 #pragma once
-// Utilities to deal with strongly-typed bits and bytes
+// Utilities to deal with strongly-typed bits and bytes, as well as general typedefs
 #include <array>
 #include <cassert>
 #include <type_traits>
 #include <vector>
+
+using prob_t = float;
 
 // A sprinkle of strong typing
 template <typename E>
