@@ -3,6 +3,7 @@
 #include <cassert>
 #include <vector>
 
+#include "data_types.hpp"
 template <typename DataT>
 struct Context {
     // End points one past the back

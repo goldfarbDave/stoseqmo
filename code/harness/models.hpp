@@ -22,6 +22,7 @@ using HashCTWModel = SequenceModel<
         RandomLookup,
         VolfHistogram<AlphabetT::size>>,
     AlphabetT>;
+template <typename AlphabetT>
 using LengthBucketHashCTWModel = SequenceModel<
     HasherBottomUp<
         LengthBucketLookup,

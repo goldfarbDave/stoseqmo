@@ -84,19 +84,50 @@ private:
     };
 public:
     using hash_t = Key;
-private:
-    std::size_t num_entries;
-    std::size_t depth;
-    std::pair<std::size_t, std::size_t> start_and_end_from_depth(std::size_t dep) {
-        return (1UL<<dep)
+    using se_t = std::pair<std::size_t, std::size_t>;
+    se_t make_bounded(std::size_t start, std::size_t end) const {
+        const auto lower = m_num_entries >> m_share_amount;
+        const auto upper = m_num_entries;
+        if (end <= start) return std::make_pair(lower, upper);
+        return std::make_pair(std::min(lower, start),
+                              std::min(upper, end));
     }
 public:
-    LengthBucketLookup(std::size_t depth, std::size_t table_size) : num_entries{table_size}, depth{depth} {}
-    std::size_t hash_to_idx(hash_t const& hash) const {
+    std::size_t m_num_entries;
+    std::size_t m_depth;
+    std::size_t m_share_amount;
+    std::size_t m_start_seed{0};
 
+    se_t start_and_end_from_depth(int depth) const {
+        constexpr auto p = 8;
+        if (depth == 0) return make_bounded(0, 1);
+        if (depth == 1) return make_bounded(1, (1UL << p)-1);
+        auto start = (1UL << ((depth-1)*p))-1;
+        auto end = (1UL << ((depth)*p))-1;
+        return make_bounded(start, end);
+    }
+    inline static auto g_share_amount{1ULL};
+public:
+    LengthBucketLookup(std::size_t depth_, std::size_t table_size) : m_num_entries{table_size}, m_depth{depth_}, m_share_amount{g_share_amount++} {
+        std::cout << "Share amount: " << m_share_amount << std::endl;
+    }
+    std::size_t hash_to_idx(hash_t const& hash) const {
+        auto [start, end] = start_and_end_from_depth(hash.depth);
+        auto width = end-start;
+        auto candidate = start + (hash.hash % width);
+        return candidate;
     }
     std::vector<hash_t> ctx_to_hashes(IdxContext ctx) const {
-
+        std::vector<hash_t> ret;
+        ret.reserve(ctx.size()+1);
+        auto seed{m_start_seed};
+        auto depth{0};
+        ret.push_back(Key{.depth=depth++, seed});
+        while (ctx) {
+            hash_combine(seed, ctx.pop());
+            ret.push_back(Key{.depth=depth++, seed});
+        }
+        return ret;
     }
 
 
