@@ -5,7 +5,7 @@
 #include <memory>
 #include <numeric>
 #include <utility>
-
+#include <unordered_map>
 #include "model_ctx.hpp"
 #include "model_mem.hpp"
 #include "model_counter.hpp"
