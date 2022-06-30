@@ -28,12 +28,14 @@ std::vector<byte_t> open_file_as_bytes(std::string path) {
 struct MemoryContents {
     std::vector<byte_t> bytes;
     std::vector<bit_t> bits;
+    std::vector<uint32_t> bytesPEOF;
 };
 
 MemoryContents load_file_in_memory(std::string path ) {
     auto bytes = open_file_as_bytes(path);
     auto bits = bytevec_to_bitvec(bytes);
-    return MemoryContents{bytes, bits};
+    auto bytesPEOF = bytevec_to_bytePEOFvec(bytes);
+    return MemoryContents{bytes, bits, bytesPEOF};
 }
 
 MemoryContents load_shakespeare() {

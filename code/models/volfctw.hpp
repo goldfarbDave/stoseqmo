@@ -85,14 +85,9 @@ public:
         return tmp;
     }
 };
-template <typename T, typename =void>
-struct has_get_probs : std::false_type {};
-template <typename T>
-struct has_get_probs<T, std::void_t<decltype(T::counter())>> : std::true_type {};
-template <typename T>
-inline constexpr bool has_get_probs_v = has_get_probs<T>::value;
+
 template <typename HistogramT>
-class TopDownExact {
+class AmortizedVolf {
     using Node=HistogramT;
 private:
     constexpr static size_t size = Node::size;
@@ -104,10 +99,10 @@ private:
     std::vector<Ptr_t> get_idx_chain(IdxContext const &ctx) const {
         std::vector<Ptr_t> idxs;
         idxs.reserve(m_depth);
-        auto idx = 0U;
-        idxs.push_back(idx);
+        idxs.push_back(0U);
         for (IdxContext c= ctx; c; c.pop()) {
-            idx = m_adj.at(idx)[c.back()];
+            auto const parent_idx = idxs.back();
+            auto idx = m_adj.at(parent_idx)[c.back()];
             if (!idx) {
                 break;
             }
@@ -115,28 +110,30 @@ private:
         }
         return idxs;
     }
+    Ptr_t get_child(Ptr_t parent_idx, size_t loc) {
+        auto child_idx = m_adj.at(parent_idx)[loc];
+        if (!child_idx) {
+            auto new_idx = static_cast<Ptr_t>(m_vec.size());
+            m_adj[parent_idx][loc] = new_idx;
+            m_adj[new_idx];
+            child_idx = new_idx;
+            m_vec.emplace_back();
+        }
+        return child_idx;
 
+    }
     std::vector<Ptr_t> make_idx_chain(IdxContext const &ctx) {
         std::vector<Ptr_t> idxs;
-        idxs.reserve(m_depth);
+        idxs.reserve(m_depth+1);
         auto idx = 0U;
         idxs.push_back(idx);
         for (IdxContext c = ctx; c; c.pop()) {
-            auto child_idx = m_adj.at(idx)[c.back()];
-            if (!child_idx) {
-                auto new_idx = static_cast<Ptr_t>(m_vec.size());
-                m_adj[idx][c.back()] = new_idx;
-                m_adj[new_idx];
-                child_idx = new_idx;
-                m_vec.emplace_back();
-            }
-            idxs.push_back(child_idx);
-            idx = child_idx;
+            idxs.push_back(get_child(idxs.back(), c.back()));
         }
         return idxs;
     }
 public:
-    TopDownExact(std::size_t depth) : m_depth{depth} {
+    AmortizedVolf(std::size_t depth) : m_depth{depth} {
         m_vec.reserve(1<<15);
         m_vec.emplace_back();
         m_adj.reserve(1<<15);
@@ -145,13 +142,9 @@ public:
     ProbAr get_probs(IdxContext const &ctx) const {
         auto idxs = get_idx_chain(ctx);
         ProbAr ret;
-        if constexpr (has_get_probs_v<Node>) {
-            if (idxs.size() <= ctx.size()+1) {
-                ret = m_vec[idxs.back()].get_probs();
-                idxs.pop_back();
-            } else {
-                ret = Node::get_prior();
-            }
+        if (idxs.size() <= ctx.size()+1) {
+            ret = m_vec[idxs.back()].get_probs();
+            idxs.pop_back();
         } else {
             ret = Node::get_prior();
         }
@@ -160,7 +153,6 @@ public:
                                [this, &depth](ProbAr const& probar, auto const &idx){
                                    return m_vec[idx].transform_probs(probar, --depth);
                                });
-        assert(depth == 0);
         return ret;
     }
     void learn(IdxContext const &ctx, idx_t sym) {
@@ -168,9 +160,9 @@ public:
         auto idxs = make_idx_chain(ctx);
         std::accumulate(std::next(idxs.crbegin()),
                         idxs.crend(),
-                        m_vec[idxs.back()].learn(sym, depth--),
+                        m_vec[idxs.back()].learn(sym, --depth),
                         [this, sym, &depth](ProbAr const &acc, auto const &idx) {
-                            return m_vec[idx].learn(sym, acc, depth--);
+                            return m_vec[idx].learn(sym, acc, --depth);
                         });
     }
 

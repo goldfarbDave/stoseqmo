@@ -9,12 +9,12 @@
 // CTW
 template <typename AlphabetT>
 using VolfCTWModel = SequenceModel<
-    TopDownExact<
+    AmortizedVolf<
         VolfHistogram<AlphabetT::size>>,
     AlphabetT>;
 template <typename AlphabetT>
 using AmnesiaVolfCTWModel= AmnesiaSequenceModel<
-    TopDownExact<
+    AmortizedVolf<
         VolfHistogram<AlphabetT::size>>,
     AlphabetT>;
 template <typename AlphabetT>
@@ -117,11 +117,30 @@ using DepthSeededHashSM1PFModel = SequenceModel<
 
 template <typename AlphabetT>
 using PPMDPModel = SequenceModel<
-    TopDownExact<
-        PPMDPHistogram<AlphabetT::size>>,
+    ExactProbDownLearnUp<
+        PPMDPHistogram<AlphabetT::size>,
+        PPMUpdatePolicy::ShallowUpdates>,
     AlphabetT>;
-
-
+template <typename AlphabetT>
+using PPMDPFullModel = SequenceModel<
+    ExactProbDownLearnUp<
+        PPMDPHistogram<AlphabetT::size>,
+        PPMUpdatePolicy::FullUpdates>,
+    AlphabetT>;
+template <typename AlphabetT>
+using HashPPMDPModel = SequenceModel<
+    HasherProbDownLearnUp<
+        RandomLookup,
+        PPMDPHistogram<AlphabetT::size>,
+        PPMUpdatePolicy::ShallowUpdates>,
+    AlphabetT>;
+template <typename AlphabetT>
+using HashPPMDPFullModel = SequenceModel<
+    HasherProbDownLearnUp<
+        RandomLookup,
+        PPMDPHistogram<AlphabetT::size>,
+        PPMUpdatePolicy::FullUpdates>,
+    AlphabetT>;
 // NB SM variants
 // NBUKN
 // template <std::size_t size>

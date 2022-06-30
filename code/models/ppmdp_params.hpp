@@ -30,10 +30,10 @@ struct BlendParamsOut{
     prob_t alpha{};
     prob_t beta{};
 };
-std::array<int, 7>rev7_map{6, 5,4,3,2,1,0};
 BlendParamsOut get_blend_params(BlendParamsIn const& inp) {
-    auto depth = rev7_map[std::min(inp.depth, 6UL)];
+    auto depth = std::min(inp.depth, 6UL);
     auto fanout = std::min(std::max(inp.fanout, 1UL)-1, 11UL);
+
     return BlendParamsOut{
         .alpha=g_alphas[depth][fanout],
         .beta=g_betas[depth][fanout]

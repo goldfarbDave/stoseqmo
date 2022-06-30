@@ -81,7 +81,6 @@ private:
     Node const & lookup(hash_t const &hash) const {
         return m_table[m_hasher.hash_to_idx(hash)];
     }
-    std::size_t start_seed{0};
     struct PathProb {
         hash_t hash;
         ProbAr parent_prob;
@@ -138,5 +137,68 @@ public:
         return Footprint{.num_nodes=m_table.size(),
                          .node_size=sizeof(Node),
                          .is_constant=true};
+    }
+};
+template <typename HashLookupT, typename HistogramT, PPMUpdatePolicy update_policy>
+class HasherProbDownLearnUp {
+public:
+    constexpr static std::size_t size = HistogramT::size;
+    using Node = HistogramT;
+private:
+    std::size_t m_depth;
+    HashLookupT m_hasher;
+    std::vector<Node> m_table{};
+    using hash_t = typename HashLookupT::hash_t;
+    using ProbAr = decltype(Node::get_prior());
+    Node& lookup(hash_t const &hash) {
+        return m_table[m_hasher.hash_to_idx(hash)];
+    }
+    Node const & lookup(hash_t const &hash) const {
+        return m_table[m_hasher.hash_to_idx(hash)];
+    }
+public:
+    HasherProbDownLearnUp(std::size_t depth, std::size_t num_entries)
+        : m_depth{depth}
+        , m_hasher(depth, num_entries)
+        , m_table(num_entries) {}
+
+    ProbAr get_probs(IdxContext const &ctx) const {
+        auto hashed_idxs = m_hasher.ctx_to_hashes(ctx);
+        auto depth = 0;
+        auto ret = std::accumulate(hashed_idxs.crbegin(),
+                                   hashed_idxs.crend(),
+                                   Node::get_prior(),
+                                   [&depth, this](ProbAr const &acc, auto const &idx) {
+                                       return lookup(idx).transform_probs(acc, depth++);
+                                   });
+        return ret;
+    }
+    void learn(IdxContext const &ctx, idx_t sym) {
+        auto depth = ctx.size();
+        auto hashed_idxs = m_hasher.ctx_to_hashes(ctx);
+        auto probs = Node::get_prior();
+        // Work backwards, updating along:
+        for (auto itr = hashed_idxs.crbegin(); itr != hashed_idxs.crend(); ++itr, --depth) {
+            auto res = lookup(*itr).learn(sym, probs, depth);
+            probs = res.probs;
+            if constexpr (update_policy == PPMUpdatePolicy::ShallowUpdates) {
+                if (!res.first_time_seen) {
+                    break;
+                }
+            } else if constexpr (update_policy == PPMUpdatePolicy::FullUpdates) {
+                continue;
+            } else {
+                // Uncovered update policy (ie, might want to add stochastic updates akin to 1PF)
+                assert(false);
+            }
+        }
+    }
+
+    Footprint footprint() const {
+        return {
+            .num_nodes=m_table.size(),
+            .node_size=sizeof(Node),
+            .is_constant=true
+        };
     }
 };

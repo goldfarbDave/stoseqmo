@@ -56,6 +56,18 @@ struct BitAlphabet {
         return sym_t(idx);
     }
 };
+struct ByteEOFAlphabet {
+    static constexpr std::size_t size = 257;
+    using sym_t=uint32_t;
+    static constexpr sym_t to_idx(sym_t el) {
+        return el;
+    }
+    template <typename T>
+    static constexpr uint32_t to_sym(T idx) {
+        assert(idx < static_cast<uint32_t>(size));
+        return sym_t(idx);
+    }
+};
 
 std::array<bit_t, 8> byte_to_bits(byte_t byte) {
     //const auto byte_digits = std::numeric_limits<std::underlying_type_t<byte_t>>::digits;
@@ -72,5 +84,13 @@ std::vector<bit_t> bytevec_to_bitvec(std::vector<byte_t> const &bytevec) {
         auto bitvec = byte_to_bits(byte);
         ret.insert(ret.end(), bitvec.begin(), bitvec.end());
     }
+    return ret;
+}
+std::vector<uint32_t> bytevec_to_bytePEOFvec(std::vector<byte_t> const &bytevec) {
+    std::vector<uint32_t> ret;
+    for (auto const &byte: bytevec) {
+        ret.push_back(to_underlying(byte));
+    }
+    ret.push_back(256);
     return ret;
 }

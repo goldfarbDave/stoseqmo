@@ -18,7 +18,7 @@
 #include "model_ctx.hpp"
 #include "model_mem.hpp"
 #include "model_sequence.hpp"
-
+#include "ppm_template_params.hpp"
 class CoinFlipper {
     // using gen_t = std::mt19937_64;
     // using gen_t = std::mt19937;
@@ -39,7 +39,7 @@ prob_t get_init_discount(std::size_t depth) {
     auto idx = std::min(depth, discount_ar.size() - 1);
     return discount_ar[idx];
 }
-template <std::size_t num_children, bool breaking=true>
+template <std::size_t num_children, PPMUpdatePolicy update_policy=PPMUpdatePolicy::ShallowUpdates>
 class SMUKNHistogram {
     // Uses "Unbounded-depth Kneser-Ney" technique
 public:
@@ -83,16 +83,19 @@ public:
         // Flip T, see old value. In Chinese Restaurant Parlance: we didn't make a new table
         auto old_t = std::exchange(m_ts[sym], 1);
         m_ttot += !old_t;
-        if constexpr(breaking) {
+        if constexpr(update_policy==PPMUpdatePolicy::ShallowUpdates) {
             return old_t;
+        } else if constexpr(update_policy==PPMUpdatePolicy::FullUpdates){
+            return false;
         } else {
+            assert(false);
             return false;
         }
     }
 };
 
 
-template <std::size_t num_children, bool breaking=true>
+template <std::size_t num_children, PPMUpdatePolicy update_policy=PPMUpdatePolicy::ShallowUpdates>
 class SM1PFHistogram {
     // Uses "probabilistic updates" method, dubbed 1PF
 public:
@@ -152,7 +155,14 @@ public:
             m_tcounter.increment(sym);
             return false;
         }
-        return breaking;
+        if constexpr(update_policy == PPMUpdatePolicy::ShallowUpdates) {
+            return true;
+        } else if constexpr(update_policy == PPMUpdatePolicy::FullUpdates){
+            return false;
+        } else {
+            assert(false);
+            return false;
+        }
     }
 };
 
