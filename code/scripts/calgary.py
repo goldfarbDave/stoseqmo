@@ -27,7 +27,7 @@ for idx, fn in enumerate(fns):
     ax = axs[r,c]
     ndf = df[df["File"] == fn]
     #for meth,color in [ ("SM1PF", 'red'),  ("SMUKN", 'blue'),("CTW", 'green'),]:
-    for meth, color in [("PPMDP", 'red'), ("SMUKN", "blue"), ("PPMDPFull", 'green')]:
+    for meth, color in [("PPMDP", 'red'), ("SMUKN", "blue"), ("PPMDPFull", 'green'), ("CTW", 'black')]:
         baseline = ndf[ndf["Meth"] == meth]
         hash_meths = ndf[ndf["Meth"] == f"Hash{meth}"].sort_values(by='MSize')
         amn_meths = ndf[ndf["Meth"] == f"Amnesia{meth}"].sort_values(by='MSize')
