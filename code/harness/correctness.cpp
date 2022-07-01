@@ -15,23 +15,23 @@ void correctness_and_entropy_test(ModelCtorT ctor) {
     // auto contents = load_file_in_memory(calgary_name_to_path.at("pic"));
     // auto contents = load_file_in_memory(cantbry_name_to_path.at("kennedy.xls"));
     // auto contents = load_shakespeare();
-    // BitVec compressed;
-    // {
-    //     TimeSection ts{"Enc"};
-    //     StreamingACEnc ac(compressed, ctor());
-    //     for (auto const &sym: contents.bytes) {
-    //         ac.encode(sym);
-    //     }
-    // }
-    // auto compressed_size = static_cast<double>(compressed.size());
-    // std::cout << "Compression: " << contents.bits.size() << " -> " << compressed_size << std::endl;
-    // std::cout << "bits/Bytes: " << compressed_size/static_cast<double>(contents.bytes.size()) << std::endl;
-    // {
-    //     StreamingACDec ac(std::move(compressed), ctor());
-    //     for (auto const &gt : contents.bytes) {
-    //         assert(ac.decode() == gt);
-    //     }
-    // }
+    BitVec compressed;
+    {
+        TimeSection ts{"Enc"};
+        StreamingACEnc ac(compressed, ctor());
+        for (auto const &sym: contents.bytes) {
+            ac.encode(sym);
+        }
+    }
+    auto compressed_size = static_cast<double>(compressed.size());
+    std::cout << "Compression: " << contents.bits.size() << " -> " << compressed_size << std::endl;
+    std::cout << "bits/Bytes: " << compressed_size/static_cast<double>(contents.bytes.size()) << std::endl;
+    {
+        StreamingACDec ac(std::move(compressed), ctor());
+        for (auto const &gt : contents.bytes) {
+            assert(ac.decode() == gt);
+        }
+    }
     {
         auto res = entropy_of_model(contents.bytes, ctor());
         // auto res = lprun(contents.bytesPEOF, ctor());
@@ -42,8 +42,7 @@ void correctness_and_entropy_test(ModelCtorT ctor) {
     }
 
 }
-int G_i{0};
-int G_c{0};
+
 int main() {
     // correctness_and_entropy_test([]() {
     //     return VolfCTWModel<ByteAlphabet>(8);
@@ -64,14 +63,14 @@ int main() {
         return PPMDPModel<ByteAlphabet>(8);
     });
     correctness_and_entropy_test([]() {
-        return FullPPMDPModel<ByteAlphabet>(8);
+        return HashPPMDPModel<ByteAlphabet>(8, 30000UL);
     });
-    correctness_and_entropy_test([]() {
-        return HashPPMDPModel<ByteAlphabet>(8, 10000UL);
-    });
-    correctness_and_entropy_test([]() {
-        return HashFullPPMDPModel<ByteAlphabet>(8, 10000UL);
-    });
+    // correctness_and_entropy_test([]() {
+    //     return FullPPMDPModel<ByteAlphabet>(8);
+    // });
+    // correctness_and_entropy_test([]() {
+    //     return HashFullPPMDPModel<ByteAlphabet>(8, 10000UL);
+    // });
     // correctness_and_entropy_test([]() {
     //     return HashSM1PFModel<ByteAlphabet>(8, 10'000UL);
     // });

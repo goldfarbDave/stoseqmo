@@ -52,20 +52,14 @@ EntropyRun<ModelT> entropy_of_model(std::vector<typename ModelT::Alphabet::sym_t
     return EntropyRun<ModelT>{.model=std::move(model), .H=H};
 }
 
-extern int G_i;
-extern int G_c;
 template <typename ModelT>
 EntropyRun<ModelT> lprun(std::vector<typename ModelT::Alphabet::sym_t> const &syms, ModelT &&model) {
     double H = 0.0;
-    G_i = 0;
     for (auto const & sym: syms) {
-        G_c = int(sym);
         auto p = pmf(model, sym);
         auto logp = log2(p);
         H -= logp;
-        std::cout << G_i << "\t"<<std::setprecision(15) <<logp <<"\t" << sym << "\n";
         model.learn(sym);
-        G_i++;
     }
     //std::cout << make_size_string(model);
     return EntropyRun<ModelT>{.model=std::move(model), .H=H};

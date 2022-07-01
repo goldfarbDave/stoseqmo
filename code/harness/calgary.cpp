@@ -298,8 +298,8 @@ int main() {
             auto const contents = load_file_in_memory(path);
             return do_hppmdpfull(contents.bytes, name, i);
         };
-        stvec.emplace_back([ppmdpfunc](){return ppmdpfunc();});
-        stvec.emplace_back([ppmdpfullfunc](){return ppmdpfullfunc();});
+        // stvec.emplace_back([ppmdpfunc](){return ppmdpfunc();});
+        // stvec.emplace_back([ppmdpfullfunc](){return ppmdpfullfunc();});
         // stvec.emplace_back([smuknfunc](){return smuknfunc();});
         for (int i=7; i < 19; ++i) {
             stvec.emplace_back([hppmdpfunc, i](){return hppmdpfunc(i);});
