@@ -1,6 +1,7 @@
 #pragma once
 // Adapted from https://github.com/omerktz/VMMPredictor/blob/master/vmms/vmm/vmm/algs/ctw/VolfNode.java
 #include <algorithm>
+#include <cmath>
 #include <limits>
 #include <memory>
 #include <numeric>
@@ -85,6 +86,78 @@ public:
         return tmp;
     }
 };
+
+template <std::size_t num_children>
+class SADCTWHistogram {
+public:
+    constexpr static std::size_t size = num_children;
+private:
+    using ProbAr = std::array<prob_t, num_children>;
+    //using count_t = std::size_t;
+    using count_t = uint8_t;
+    RescalingCounter<count_t, num_children> m_counter{};
+    void update_counts(idx_t sym) {
+        m_counter.increment(sym);
+    }
+public:
+    static constexpr ProbAr get_prior() {
+        ProbAr ret;
+        std::fill(ret.begin(), ret.end(), 1.0/size);
+        return ret;
+    }
+    ProbAr get_probs() const {
+        ProbAr tmp;
+        // SAD estimator
+        auto const sad = [this]() {
+            auto n = static_cast<prob_t>(m_counter.unique());
+            auto m = static_cast<prob_t>(m_counter.total());
+            auto ln = std::log(n+1);
+            auto lm = std::log(m);
+            return m / (2*(ln-lm));
+        }();
+        auto const alpha = sad == 0 ? 1.0/static_cast<prob_t>(num_children) : sad;
+        auto sum = static_cast<prob_t>(0.0);
+        std::transform(m_counter.begin(), m_counter.end(), tmp.begin(),
+                       [&sum, alpha](auto const &count) {
+                           auto res = count+alpha;
+                           sum += res;
+                           return res;
+                       });
+        std::transform(tmp.begin(), tmp.end(), tmp.begin(),
+                       [sum](auto const &el) {
+                           return el / sum;
+                       });
+        return tmp;
+    }
+    ProbAr learn(idx_t sym, std::size_t /*depth*/) {
+        // Called in the leaf node case
+        auto ret = get_probs();
+        update_counts(sym);
+        return ret;
+    }
+    ProbAr learn(idx_t sym, ProbAr const& child_probs, std::size_t /*depth*/) {
+        // Internal node case
+        // auto const child_pw = child_probs[sym];
+        // auto ret = transform_probs(child_probs, depth);
+        // update_counts(sym);
+        // return ret;
+        update_counts(sym);
+        return child_probs;
+    }
+    ProbAr transform_probs(ProbAr const &child_probs, std::size_t /*depth*/) const {
+        // auto sum = static_cast<prob_t>(0.0);
+        auto my_probs = get_probs();
+        auto prod = std::max(.000001, std::accumulate(child_probs.begin(), child_probs.end(), 1.0, std::multiplies<prob_t>{}));
+        std::transform(my_probs.begin(), my_probs.end(), my_probs.begin(),
+                       [prod](auto const &prob) {
+                           return 0.5*(prob+prod);
+                       });
+        return my_probs;
+    }
+};
+
+
+
 
 template <typename HistogramT>
 class AmortizedVolf {

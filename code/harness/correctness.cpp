@@ -42,11 +42,20 @@ void correctness_and_entropy_test(ModelCtorT ctor) {
     }
 
 }
+template <typename AlphabetT>
+using SADCTWModel = SequenceModel<
+    AmortizedVolf<
+        SADCTWHistogram<AlphabetT::size>>,
+    AlphabetT>;
 
 int main() {
+    limit_gb(3);
     // correctness_and_entropy_test([]() {
-    //     return VolfCTWModel<ByteAlphabet>(8);
+    //     return VolfCTWModel<ByteAlphabet>(2);
     // });
+    correctness_and_entropy_test([]() {
+        return SADCTWModel<ByteAlphabet>(2);
+    });
     // correctness_and_entropy_test([]() {
     //     return AmnesiaVolfCTWModel<ByteAlphabet>(8, 20'000);
     // });
@@ -59,12 +68,12 @@ int main() {
     // correctness_and_entropy_test([]() {
     //     return SM1PFModel<ByteAlphabet>(8);
     // });
-    correctness_and_entropy_test([]() {
-        return PPMDPModel<ByteAlphabet>(8);
-    });
-    correctness_and_entropy_test([]() {
-        return HashPPMDPModel<ByteAlphabet>(8, 30000UL);
-    });
+    // correctness_and_entropy_test([]() {
+    //     return PPMDPModel<ByteAlphabet>(8);
+    // });
+    // correctness_and_entropy_test([]() {
+    //     return HashPPMDPModel<ByteAlphabet>(8, 30000UL);
+    // });
     // correctness_and_entropy_test([]() {
     //     return FullPPMDPModel<ByteAlphabet>(8);
     // });

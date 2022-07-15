@@ -6,6 +6,8 @@
 #include "hashing.hpp"
 #include "hash_methods.hpp"
 
+
+
 // CTW
 template <typename AlphabetT>
 using VolfCTWModel = SequenceModel<
