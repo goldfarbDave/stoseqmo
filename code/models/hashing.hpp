@@ -35,21 +35,23 @@ public:
     void learn(IdxContext const &ctx, idx_t const & sym) {
         // Naive approach, build up counts, then iterate backwards (deeper to shallower context)
         auto hashed_idxs = m_hasher.ctx_to_hashes(ctx);
+        auto depth = hashed_idxs.size();
         std::accumulate(std::next(hashed_idxs.rbegin()),
                         hashed_idxs.rend(),
-                        lookup(hashed_idxs.back()).learn(sym),
-                        [this, sym](ProbAr const &acc, auto const &idx) {
-                            return lookup(idx).learn(sym, acc);
+                        lookup(hashed_idxs.back()).learn(sym, depth--),
+                        [this, sym, &depth](ProbAr const &acc, auto const &idx) {
+                            return lookup(idx).learn(sym, acc, depth--);
                         });
     }
     ProbAr get_probs(IdxContext ctx) const {
         // Let's be naive and build up our counts, then iterate backwards:
         auto hashed_idxs = m_hasher.ctx_to_hashes(ctx);
+        auto depth = hashed_idxs.size()-1;
         return std::accumulate(std::next(hashed_idxs.crbegin()),
                                hashed_idxs.crend(),
                                lookup(hashed_idxs.back()).get_probs(),
-                               [this](ProbAr const &acc, auto const &idx) {
-                                   return lookup(idx).transform_probs(acc);
+                               [this, &depth](ProbAr const &acc, auto const &idx) {
+                                   return lookup(idx).transform_probs(acc, depth--);
                                });
     }
 

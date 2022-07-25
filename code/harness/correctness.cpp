@@ -9,6 +9,7 @@ template <typename ModelCtorT>
 void correctness_and_entropy_test(ModelCtorT ctor) {
     // static_assert(std::is_same_v<typename decltype(ctor())::Alphabet::sym_t,byte_t>);
     auto contents = load_file_in_memory(cantbry_name_to_path.at("fields.c"));
+    // auto contents = load_file_in_memory("../data/abc1bit/abc1bit.txt");
     // auto contents = load_file_in_memory("../testfile");
 
     // auto contents = load_file_in_memory(calgary_name_to_path.at("bib"));
@@ -42,19 +43,11 @@ void correctness_and_entropy_test(ModelCtorT ctor) {
     }
 
 }
-template <typename AlphabetT>
-using SADCTWModel = SequenceModel<
-    AmortizedVolf<
-        SADCTWHistogram<AlphabetT::size>>,
-    AlphabetT>;
 
 int main() {
     limit_gb(3);
-    // correctness_and_entropy_test([]() {
-    //     return VolfCTWModel<ByteAlphabet>(2);
-    // });
     correctness_and_entropy_test([]() {
-        return SADCTWModel<ByteAlphabet>(2);
+        return VolfCTWModel<ByteAlphabet>(8);
     });
     // correctness_and_entropy_test([]() {
     //     return AmnesiaVolfCTWModel<ByteAlphabet>(8, 20'000);
@@ -65,12 +58,12 @@ int main() {
     // correctness_and_entropy_test([]() {
     //     return DepthSeededHashCTWModel<ByteAlphabet>(8, 24983UL);
     // });
-    // correctness_and_entropy_test([]() {
-    //     return SM1PFModel<ByteAlphabet>(8);
-    // });
-    // correctness_and_entropy_test([]() {
-    //     return PPMDPModel<ByteAlphabet>(8);
-    // });
+    correctness_and_entropy_test([]() {
+        return SM1PFModel<ByteAlphabet>(8);
+    });
+    correctness_and_entropy_test([]() {
+        return PPMDPModel<ByteAlphabet>(8);
+    });
     // correctness_and_entropy_test([]() {
     //     return HashPPMDPModel<ByteAlphabet>(8, 30000UL);
     // });

@@ -1,4 +1,4 @@
-CORPORA=cantrbry enwik8 shakespeare calgary
+CORPORA=cantrbry enwik8 shakespeare calgary abc1bit
 
 all: $(CORPORA)
 
@@ -24,3 +24,8 @@ shakespeare:
 calgary:
 	mkdir -p $@
 	wget -qO- http://corpus.canterbury.ac.nz/resources/calgary.tar.gz | tar xz -C $@
+
+abc1bit:
+	mkdir -p $@
+	gzip -kd abc1bit.txt.gz
+	mv abc1bit.txt $@
