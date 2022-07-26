@@ -143,6 +143,18 @@ using HashPPMDPFullModel = SequenceModel<
         PPMDPHistogram<AlphabetT::size>,
         PPMUpdatePolicy::FullUpdates>,
     AlphabetT>;
+template <typename AlphabetT>
+using AmnesiaPPMDPModel = AmnesiaSequenceModel<
+    ExactProbDownLearnUp<
+        PPMDPHistogram<AlphabetT::size>,
+        PPMUpdatePolicy::ShallowUpdates>,
+    AlphabetT>;
+template <typename AlphabetT>
+using AmnesiaPPMDPFullModel = AmnesiaSequenceModel<
+    ExactProbDownLearnUp<
+        PPMDPHistogram<AlphabetT::size>,
+        PPMUpdatePolicy::FullUpdates>,
+    AlphabetT>;
 // NB SM variants
 // NBUKN
 // template <std::size_t size>

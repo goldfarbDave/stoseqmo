@@ -27,7 +27,7 @@ struct LineItem {
 };
 constexpr auto DEPTH = 8;
 // LineItem do_ctw(std::vector<byte_t> const &bytes, std::string const &name) {
-//     auto res = entropy_of_model(bytes, VolfModel<ByteAlphabet>(DEPTH, 15.0));
+//     auto res = entropy_of_model(bytes, VolfCTWModel<ByteAlphabet>(DEPTH, 15.0));
 //     LineItem ctw_li{.fn=name,
 //                     .mn="CTW",
 //                     .fs=bytes.size(),
@@ -36,18 +36,18 @@ constexpr auto DEPTH = 8;
 //     };
 //     return ctw_li;
 // }
-// LineItem do_hashctw(std::vector<byte_t> const &bytes, std::string const& name, int log_tab_size) {
-//     auto res = entropy_of_model(bytes, HashModel<ByteAlphabet>(1<<log_tab_size, DEPTH));
-//     LineItem hm_li{.fn = name,
-//                    .mn="HashCTW",
-//                    .fs=bytes.size(),
-//                    .ms=res.model.footprint(),
-//                    .entropy=res.H
-//     };
-//     return hm_li;
-// }
+LineItem do_hashctw(std::vector<byte_t> const &bytes, std::string const& name, int log_tab_size) {
+    auto res = entropy_of_model(bytes, HashCTWModel<ByteAlphabet>(DEPTH, 1UL<<log_tab_size));
+    LineItem hm_li{.fn = name,
+                   .mn="HashCTW",
+                   .fs=bytes.size(),
+                   .ms=res.model.footprint(),
+                   .entropy=res.H
+    };
+    return hm_li;
+}
 LineItem do_amnesiactw(std::vector<byte_t> const &bytes, std::string const& name, int log_tab_size) {
-    auto res = entropy_of_model(bytes, AmnesiaVolfCTWModel<ByteAlphabet>(DEPTH, 1<<log_tab_size));
+    auto res = entropy_of_model(bytes, AmnesiaVolfCTWModel<ByteAlphabet>(DEPTH, 1UL<<log_tab_size));
     LineItem am_li{.fn = name,
                    .mn="AmnesiaCTW",
                    .fs=bytes.size(),
@@ -205,6 +205,28 @@ LineItem do_hppmdpfull(std::vector<byte_t> const &bytes, std::string const &name
     };
     return sm_li;
 }
+LineItem do_appmdp(std::vector<byte_t> const &bytes, std::string const &name, int log_tab_size) {
+    auto res = entropy_of_model(bytes, AmnesiaPPMDPModel<ByteAlphabet>(DEPTH,
+                                                                       1UL<<log_tab_size));
+    LineItem sm_li{.fn=name,
+                   .mn="AmnesiaPPMDP",
+                   .fs=bytes.size(),
+                   .ms=res.model.footprint(),
+                   .entropy=res.H,
+    };
+    return sm_li;
+}
+LineItem do_appmdpfull(std::vector<byte_t> const &bytes, std::string const &name, int log_tab_size) {
+    auto res = entropy_of_model(bytes, AmnesiaPPMDPFullModel<ByteAlphabet>(DEPTH,
+                                                                        1UL<<log_tab_size));
+    LineItem sm_li{.fn=name,
+                   .mn="AmnesiaPPMDPFull",
+                   .fs=bytes.size(),
+                   .ms=res.model.footprint(),
+                   .entropy=res.H,
+    };
+    return sm_li;
+}
 int main() {
     //limit_gb(5);
     std::cout << LineItem{}.header() << std::endl;
@@ -216,16 +238,6 @@ int main() {
         //     auto const path = calgary_name_to_path.at(name);
         //     auto const contents = load_file_in_memory(path);
         //     return do_ctw(contents.bytes, name);
-        // };
-        // auto hctwfunc = [name](int i) {
-        //     auto const path = calgary_name_to_path.at(name);
-        //     auto const contents = load_file_in_memory(path);
-        //     return do_hashctw(contents.bytes, name, i);
-        // };
-        // auto actwfunc = [name](int i) {
-        //     auto const path = calgary_name_to_path.at(name);
-        //     auto const contents = load_file_in_memory(path);
-        //     return do_amnesiactw(contents.bytes, name, i);
         // };
         // stvec.emplace_back([ctwfunc](){return ctwfunc();});
         // for (int i =7; i < 19; ++i) {
@@ -242,6 +254,41 @@ int main() {
         //     auto const path = calgary_name_to_path.at(name);
         //     auto const contents = load_file_in_memory(path);
         //     return do_sm1pf(contents.bytes, name);
+        // };
+        // auto lbhctwfunc = [name](int i) {
+        //     auto const path = calgary_name_to_path.at(name);
+        //     auto const contents = load_file_in_memory(path);
+        //     return do_lbhashctw(contents.bytes, name, i);
+        // };
+        // auto lbhsmuknfunc = [name](int i) {
+        //     auto const path = calgary_name_to_path.at(name);
+        //     auto const contents = load_file_in_memory(path);
+        //     return do_lbhashsmukn(contents.bytes, name, i);
+        // };
+        // auto lbhsm1pffunc = [name](int i) {
+        //     auto const path = calgary_name_to_path.at(name);
+        //     auto const contents = load_file_in_memory(path);
+        //     return do_lbhashsm1pf(contents.bytes, name, i);
+        // };
+        // auto ppmdpfunc = [name]() {
+        //     auto const path = calgary_name_to_path.at(name);
+        //     auto const contents = load_file_in_memory(path);
+        //     return do_ppmdp(contents.bytes, name);
+        // };
+        // auto ppmdpfullfunc = [name]() {
+        //     auto const path = calgary_name_to_path.at(name);
+        //     auto const contents = load_file_in_memory(path);
+        //     return do_ppmdpfull(contents.bytes, name);
+        // };
+        // auto hctwfunc = [name](int i) {
+        //     auto const path = calgary_name_to_path.at(name);
+        //     auto const contents = load_file_in_memory(path);
+        //     return do_hashctw(contents.bytes, name, i);
+        // };
+        // auto actwfunc = [name](int i) {
+        //     auto const path = calgary_name_to_path.at(name);
+        //     auto const contents = load_file_in_memory(path);
+        //     return do_amnesiactw(contents.bytes, name, i);
         // };
         // auto hsmuknfunc = [name](int i) {
         //     auto const path = calgary_name_to_path.at(name);
@@ -263,47 +310,41 @@ int main() {
         //     auto const contents = load_file_in_memory(path);
         //     return do_amnesiasm1pf(contents.bytes, name, i);
         // };
-        // auto lbhctwfunc = [name](int i) {
+        // auto hppmdpfunc = [name](int i) {
         //     auto const path = calgary_name_to_path.at(name);
         //     auto const contents = load_file_in_memory(path);
-        //     return do_lbhashctw(contents.bytes, name, i);
+        //     return do_hppmdp(contents.bytes, name, i);
         // };
-        // auto lbhsmuknfunc = [name](int i) {
+        // auto hppmdpfullfunc = [name](int i) {
         //     auto const path = calgary_name_to_path.at(name);
         //     auto const contents = load_file_in_memory(path);
-        //     return do_lbhashsmukn(contents.bytes, name, i);
+        //     return do_hppmdpfull(contents.bytes, name, i);
         // };
-        // auto lbhsm1pffunc = [name](int i) {
-        //     auto const path = calgary_name_to_path.at(name);
-        //     auto const contents = load_file_in_memory(path);
-        //     return do_lbhashsm1pf(contents.bytes, name, i);
-        // };
-        auto ppmdpfunc = [name]() {
+        auto appmdpfunc = [name](int i) {
             auto const path = calgary_name_to_path.at(name);
             auto const contents = load_file_in_memory(path);
-            return do_ppmdp(contents.bytes, name);
+            return do_appmdp(contents.bytes, name, i);
         };
-        auto ppmdpfullfunc = [name]() {
+        auto appmdpfullfunc = [name](int i) {
             auto const path = calgary_name_to_path.at(name);
             auto const contents = load_file_in_memory(path);
-            return do_ppmdpfull(contents.bytes, name);
-        };
-        auto hppmdpfunc = [name](int i) {
-            auto const path = calgary_name_to_path.at(name);
-            auto const contents = load_file_in_memory(path);
-            return do_hppmdp(contents.bytes, name, i);
-        };
-        auto hppmdpfullfunc = [name](int i) {
-            auto const path = calgary_name_to_path.at(name);
-            auto const contents = load_file_in_memory(path);
-            return do_hppmdpfull(contents.bytes, name, i);
+            return do_appmdpfull(contents.bytes, name, i);
         };
         // stvec.emplace_back([ppmdpfunc](){return ppmdpfunc();});
         // stvec.emplace_back([ppmdpfullfunc](){return ppmdpfullfunc();});
         // stvec.emplace_back([smuknfunc](){return smuknfunc();});
-        for (int i=7; i < 19; ++i) {
-            stvec.emplace_back([hppmdpfunc, i](){return hppmdpfunc(i);});
-            stvec.emplace_back([hppmdpfullfunc, i](){return hppmdpfullfunc(i);});
+        for (int i=7; i < 21; ++i) {
+            // stvec.emplace_back([hctwfunc, i](){return hctwfunc(i);});
+            // stvec.emplace_back([actwfunc, i](){return actwfunc(i);});
+            // stvec.emplace_back([hsmuknfunc, i](){return hsmuknfunc(i);});
+            // stvec.emplace_back([hsm1pffunc, i](){return hsm1pffunc(i);});
+            // stvec.emplace_back([asmuknfunc, i](){return asmuknfunc(i);});
+            // stvec.emplace_back([asm1pffunc, i](){return asm1pffunc(i);});
+            // stvec.emplace_back([hppmdpfunc, i](){return hppmdpfunc(i);});
+            // stvec.emplace_back([hppmdpfullfunc, i](){return hppmdpfullfunc(i);});
+            stvec.emplace_back([appmdpfunc, i](){return appmdpfunc(i);});
+            stvec.emplace_back([appmdpfullfunc, i](){return appmdpfullfunc(i);});
+
             // stvec.emplace_back([lbhctwfunc, i](){return lbhctwfunc(i);});
             // stvec.emplace_back([lbhsmuknfunc, i](){return lbhsmuknfunc(i);});
             // stvec.emplace_back([lbhsm1pffunc, i](){return lbhsm1pffunc(i);});
