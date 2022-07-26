@@ -1,8 +1,18 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+from pathlib import Path
+import argparse
+import sys
+parser = argparse.ArgumentParser()
+scrdir = Path(__file__).resolve().parent
+parser.add_argument("-csv", type=Path,
+                    default=scrdir / "../harness/calgary.csv")
+parser.add_argument("-svg", type=Path,
+                    default=scrdir / "calgary.svg")
+args = parser.parse_args()
 
-df = pd.read_csv("../harness/calgary.csv")
+df = pd.read_csv(args.csv)
 # Add b/B
 df = df.join((df["Entropy"]/df["FSize"]).to_frame(name="b/B"))
 
@@ -15,6 +25,26 @@ df = df.join((df["Entropy"]/df["FSize"]).to_frame(name="b/B"))
 fns = np.unique(df["File"])
 shape = (3,6)
 fig, axs = plt.subplots(*shape)
+plt.subplots_adjust(
+    top=0.88,
+bottom=0.11,
+left=0.11,
+right=0.9,
+hspace=0.2,
+wspace=0.2
+)
+# plt.subplots_adjust(
+#     top=0.9,
+#     bottom=0.8,
+#     left=0.9,
+#     right=0.901,
+#     hspace=0.2,
+#     wspace=0.2
+#     )
+dpi = fig.get_dpi()
+
+#fig.set_size_inches(11.69, 8.27)
+fig.set_size_inches(1920/dpi, 1200/dpi)
 coords = np.arange(18).reshape(3,6)
 to_coords = lambda idx: (np.where(coords==idx)[0][0], np.where(coords==idx)[1][0])
 light_color_map = {
@@ -22,12 +52,13 @@ light_color_map = {
     "blue": "lightblue",
     "green": "lightgreen"
 }
+binary_data_fns = {"obj1", "obj2", "pic", "geo"}
 for idx, fn in enumerate(fns):
     r,c = to_coords(idx)
     ax = axs[r,c]
     ndf = df[df["File"] == fn]
-    #for meth,color in [ ("SM1PF", 'red'),  ("SMUKN", 'blue'),("CTW", 'green'),]:
-    for meth, color in [("PPMDP", 'red'), ("SMUKN", "blue"), ("PPMDPFull", 'green'), ("CTW", 'black')]:
+    #for meth,color in [ ("SM1PF", 'red'),  ("SMUKN", 'blue'),("CTW", 'green'),]: ,("PPMDPFull", 'green'),
+    for meth, color in [("PPMDP", 'red'), ("SMUKN", "blue"), ("CTW", 'black')]:
         baseline = ndf[ndf["Meth"] == meth]
         hash_meths = ndf[ndf["Meth"] == f"Hash{meth}"].sort_values(by='MSize')
         amn_meths = ndf[ndf["Meth"] == f"Amnesia{meth}"].sort_values(by='MSize')
@@ -36,11 +67,19 @@ for idx, fn in enumerate(fns):
         # ax.plot(amn_meths["MSize"].values, amn_meths["b/B"], color=color, linestyle='dashdot', label=f"Amnesia-{meth} Compression Ratio")
         # ax.plot(lb_meths["MSize"].values, lb_meths["b/B"], color="purple", label=f"Length Bucket Stochastic {meth} Compression Ratio")
         ax.axhline(y=baseline["b/B"].values[0], linestyle='dashed', color=color, label=f"{meth} Compression Ratio")
-        ax.axvline(x=baseline["MSize"].values[0], linestyle='dotted', color=color, label=f"{meth} Histograms used")
+    ax.axvline(x=baseline["MSize"].values[0], linestyle='dotted', color=color, label=f"Unbounded Histograms used")
+
     ax.set_xscale("log", base=2)
-    # ax.set_xlabel("(# of Histograms)")
-    # ax.set_ylabel("Compressed bits/Uncompressed Byte")
-    # ax.set_title("Compression ratio vs # of Histograms: bib")
+    if fn in binary_data_fns:
+        ax.set_facecolor("grey")
     ax.set_title(fn)
+xlabel = "(# of Histograms)"
+ylabel = "Compressed bits/Uncompressed Byte"
+title = "Compression ratio vs # of Histograms: Calgary"
 ax.legend()
-plt.show()
+fig.supxlabel(xlabel)
+fig.supylabel(ylabel)
+fig.suptitle(title)
+plt.savefig(args.svg, format='svg')
+# dest = len(sys.arg) == 1
+# plt.savefig()
