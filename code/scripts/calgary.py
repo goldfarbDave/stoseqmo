@@ -3,16 +3,18 @@ import numpy as np
 import matplotlib.pyplot as plt
 from pathlib import Path
 import argparse
-import sys
+try:
+    srcdir = Path(__file__).resolve().parent
+except NameError:
+    srcdir = Path("./")
 parser = argparse.ArgumentParser()
-scrdir = Path(__file__).resolve().parent
-parser.add_argument("-csv", type=Path,
-                    default=scrdir / "../harness/calgary.csv")
 parser.add_argument("-svg", type=Path,
-                    default=scrdir / "calgary.svg")
+                    default=srcdir / "calgary.svg")
 args = parser.parse_args()
-
-df = pd.read_csv(args.csv)
+svgpath = args.svg
+pgfpath = args.svg.parent / "calgary.pgf"
+csvpath = srcdir/"../harness/calgary.csv"
+df = pd.read_csv(csvpath)
 # Add b/B
 df = df.join((df["Entropy"]/df["FSize"]).to_frame(name="b/B"))
 
@@ -33,17 +35,9 @@ right=0.9,
 hspace=0.2,
 wspace=0.2
 )
-# plt.subplots_adjust(
-#     top=0.9,
-#     bottom=0.8,
-#     left=0.9,
-#     right=0.901,
-#     hspace=0.2,
-#     wspace=0.2
-#     )
 dpi = fig.get_dpi()
 
-#fig.set_size_inches(11.69, 8.27)
+# fig.set_size_inches(11.69, 7.27)
 fig.set_size_inches(1920/dpi, 1200/dpi)
 coords = np.arange(18).reshape(3,6)
 to_coords = lambda idx: (np.where(coords==idx)[0][0], np.where(coords==idx)[1][0])
@@ -64,6 +58,7 @@ for idx, fn in enumerate(fns):
         amn_meths = ndf[ndf["Meth"] == f"Amnesia{meth}"].sort_values(by='MSize')
         lb_meths = ndf[ndf["Meth"] == f"LengthBucketHash{meth}"].sort_values(by='MSize')
         ax.plot(hash_meths["MSize"].values, hash_meths["b/B"], color=color, label=f"Stochastic-{meth} Compression Ratio")
+        # ax.plot(amn_meths["MSize"].values, amn_meths["b/B"], color=light_color_map[color], label=f"Amnesia-{meth} Compression Ratio")
         # ax.plot(amn_meths["MSize"].values, amn_meths["b/B"], color=color, linestyle='dashdot', label=f"Amnesia-{meth} Compression Ratio")
         # ax.plot(lb_meths["MSize"].values, lb_meths["b/B"], color="purple", label=f"Length Bucket Stochastic {meth} Compression Ratio")
         ax.axhline(y=baseline["b/B"].values[0], linestyle='dashed', color=color, label=f"{meth} Compression Ratio")
@@ -73,13 +68,13 @@ for idx, fn in enumerate(fns):
     if fn in binary_data_fns:
         ax.set_facecolor("grey")
     ax.set_title(fn)
-xlabel = "(# of Histograms)"
+xlabel = "(Num of Histograms)"
 ylabel = "Compressed bits/Uncompressed Byte"
-title = "Compression ratio vs # of Histograms: Calgary"
+title = "Compression ratio vs Num of Histograms: Calgary"
 ax.legend()
 fig.supxlabel(xlabel)
 fig.supylabel(ylabel)
 fig.suptitle(title)
-plt.savefig(args.svg, format='svg')
-# dest = len(sys.arg) == 1
-# plt.savefig()
+# plt.savefig(pgfpath, format='pgf')
+plt.savefig(svgpath, format='svg')
+# plt.show()
