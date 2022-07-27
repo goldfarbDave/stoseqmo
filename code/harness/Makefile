@@ -2,7 +2,8 @@ ROOT=..
 OPTFLAGS=-O3 -march=native
 WARNFLAGS=-Wall -Wextra -Wdisabled-optimization -Wmissing-include-dirs -Wredundant-decls -Wshadow -Wundef -Werror -Weffc++ -Wfatal-errors
 # Extra flags that break on either clang or non-home systems
-EXTRAWARNFLAGS=-Wconversion -Wlogical-op
+GCCONLYFLAGS=-Wlogical-op
+# EXTRAWARNFLAGS=-Wconversion
 # ASANFLAGS=-fno-omit-frame-pointer -fsanitize=address
 PTHREADFLAGS=-pthread -lpthread
 INC_DIRS= corpus utils coding/ac models harness
@@ -32,16 +33,15 @@ ROOT_IN_QUOTES=$(addprefix '",$(addsuffix "',$(ROOT)))
 INC=$(addprefix -I$(ROOT)/,$(INC_DIRS))
 HEADERS=$(addprefix $(ROOT)/,$(HEADER_FILES))
 
-CPPFLAGS=-std=c++17 $(OPTFLAGS) $(WARNFLAGS) $(EXTRAWARNFLAGS) $(PTHREADFLAGS) $(ASANFLAGS) -g $(INC) -DROOT_PATH=$(ROOT_IN_QUOTES)
+CPPFLAGS=-std=c++17 $(OPTFLAGS) $(WARNFLAGS) $(GCCONLYFLAGS) $(EXTRAWARNFLAGS) $(PTHREADFLAGS) $(ASANFLAGS) -g $(INC) -DROOT_PATH=$(ROOT_IN_QUOTES)
 
 
 # all: correctness
 # 	./correctness
-all: filebench
-	./filebench calgary
-# all: shakespeare
-# 	./shakespeare | time tee shakespeare.csv
+all: shakespeare.csv cantbry.csv
 
+%.csv: filebench
+	./filebench $(*F) | tee $(*F)_other.csv
 
 shakespeare: shakespeare.cpp $(HEADERS) $(MAKEFILE_LIST)
 	g++ $(CPPFLAGS) $< -o $@
