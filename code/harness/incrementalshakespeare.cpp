@@ -11,7 +11,7 @@
 
 int main() {
     // limit_gb(5);
-    int const num_threads = std::thread::hardware_concurrency();
+    int const num_threads = 12;
     std::cerr << "Executing on " << num_threads << " threads\n";
     Executor<IncrementalItem> executor{num_threads};
     auto task = get_shakespeare_task();
