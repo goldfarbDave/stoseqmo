@@ -6,16 +6,14 @@
 #include "hashing.hpp"
 #include "hash_methods.hpp"
 
-
-
 // CTW
 template <typename AlphabetT>
-using VolfCTWModel = SequenceModel<
+using CTWModel = SequenceModel<
     AmortizedVolf<
         VolfHistogram<AlphabetT::size>>,
     AlphabetT>;
 template <typename AlphabetT>
-using AmnesiaVolfCTWModel= AmnesiaSequenceModel<
+using AmnesiaCTWModel= AmnesiaSequenceModel<
     AmortizedVolf<
         VolfHistogram<AlphabetT::size>>,
     AlphabetT>;

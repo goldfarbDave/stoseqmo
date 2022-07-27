@@ -5,7 +5,7 @@
 #include <iomanip>
 #include <utility>
 #include "model_mem.hpp"
-#include "strong_types.hpp"
+#include "data_types.hpp"
 // Utilities for running file benchmarks and reporting results
 struct LineItem {
     std::string fn;
@@ -42,34 +42,15 @@ LineItem run_task(Task task, ModelCtorT ctor) {
                     .entropy=res.H};
 }
 
-template<template<typename AlphabetUsed> class ModelT>
-auto plain_factory(std::string const &str) {
-    return [str](){return std::make_pair(str, ModelT<ByteAlphabet>(DEPTH));};
-}
-template<template<typename AlphabetUsed> class ModelT>
-auto tab_factory(std::string const &str, int log_tab_size) {
-    return [str, log_tab_size](){
-        return std::make_pair(str,
-                              ModelT<ByteAlphabet>(DEPTH, 1UL<<log_tab_size));};
-}
 
-std::vector<Task> get_calgary_tasks() {
-    std::vector<Task> tasks;
-    std::transform(calgary_names.begin(), calgary_names.end(),
-                   std::back_inserter(tasks),
-                   [](auto const &name) {
-                       auto contents = load_file_in_memory(calgary_name_to_path.at(name));
-                       return Task{.file_name=name,
-                                   .file_bytes=contents.bytes};
-                   });
-    return tasks;
-}
+
+
 template <typename ListT, typename MapT>
 std::vector<Task> get_corpus_tasks(ListT const& names, MapT const& name_to_path) {
     std::vector<Task> tasks;
     std::transform(names.begin(), names.end(),
                    std::back_inserter(tasks),
-                   [](auto const &name) {
+                   [&name_to_path](auto const &name) {
                        auto contents = load_file_in_memory(name_to_path.at(name));
                        return Task{.file_name=name,
                                    .file_bytes=contents.bytes};

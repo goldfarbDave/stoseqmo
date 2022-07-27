@@ -1,12 +1,14 @@
 ROOT=..
 OPTFLAGS=-O3 -march=native
-WARNFLAGS=-Wall -Wextra -Wdisabled-optimization -Wlogical-op -Wmissing-include-dirs -Wredundant-decls -Wshadow -Wundef -Werror -Weffc++ -Wfatal-errors
-#EXTRAWARNFLAGS=-Wconversion
+WARNFLAGS=-Wall -Wextra -Wdisabled-optimization -Wmissing-include-dirs -Wredundant-decls -Wshadow -Wundef -Werror -Weffc++ -Wfatal-errors
+# Extra flags that break on either clang or non-home systems
+EXTRAWARNFLAGS=-Wconversion -Wlogical-op
 # ASANFLAGS=-fno-omit-frame-pointer -fsanitize=address
 PTHREADFLAGS=-pthread -lpthread
 INC_DIRS= corpus utils coding/ac models harness
 HEADER_FILES=\
 	harness/models.hpp \
+	harness/file_utils.hpp \
 	corpus/corpus.hpp \
 	utils/utils.hpp \
 	utils/data_types.hpp \
@@ -33,10 +35,10 @@ HEADERS=$(addprefix $(ROOT)/,$(HEADER_FILES))
 CPPFLAGS=-std=c++17 $(OPTFLAGS) $(WARNFLAGS) $(EXTRAWARNFLAGS) $(PTHREADFLAGS) $(ASANFLAGS) -g $(INC) -DROOT_PATH=$(ROOT_IN_QUOTES)
 
 
-all: correctness
-	./correctness
-# all: calgary
-# 	./calgary | time tee calgary_rest_other.csv
+# all: correctness
+# 	./correctness
+all: filebench
+	./filebench calgary
 # all: shakespeare
 # 	./shakespeare | time tee shakespeare.csv
 
@@ -45,5 +47,5 @@ shakespeare: shakespeare.cpp $(HEADERS) $(MAKEFILE_LIST)
 	g++ $(CPPFLAGS) $< -o $@
 correctness: correctness.cpp $(HEADERS) $(MAKEFILE_LIST)
 	g++ $(CPPFLAGS) $< -o $@
-calgary: calgary.cpp $(HEADERS) $(MAKEFILE_LIST)
+filebench: filebench.cpp $(HEADERS) $(MAKEFILE_LIST)
 	g++ $(CPPFLAGS) $< -o $@
