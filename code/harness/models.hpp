@@ -6,6 +6,14 @@
 #include "hashing.hpp"
 #include "hash_methods.hpp"
 
+#define LIST_OF_MODELS \
+    X(CTW) \
+    X(SM1PF) \
+    X(SMUKN) \
+    X(PPMDP) \
+    X(PPMDPFull)
+
+
 // CTW
 template <typename AlphabetT>
 using CTWModel = SequenceModel<
