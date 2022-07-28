@@ -43,6 +43,9 @@ int main(int argc, char *argv[]) {
 #define hash(str) wrap_task(tab_factory<Hash##str##Model>(\
                                 STRINGIFY(Hash##str),     \
                                 1UL << log_tab_size))
+#define fnvhash(str) wrap_task(tab_factory<FNVHash##str##Model>(\
+                                   STRINGIFY(FNVHash##str),     \
+                                   1UL << log_tab_size))
 #define amnesia(str) wrap_task(tab_factory<Amnesia##str##Model>(\
                                    STRINGIFY(Amnesia##str),     \
                                    1UL <<log_tab_size))
@@ -52,19 +55,26 @@ int main(int argc, char *argv[]) {
         // plain(SMUKN);
         // plain(PPMDP);
         // plain(PPMDPFull);
-        for (int log_tab_size = 7; log_tab_size < 8; ++log_tab_size) {
-            hash(CTW);
+        for (int log_tab_size = 7; log_tab_size < 21; ++log_tab_size) {
+            // hash(CTW);
             // hash(SM1PF);
             // hash(SMUKN);
             // hash(PPMDP);
             // hash(PPMDPFull);
+            fnvhash(CTW);
+            fnvhash(SM1PF);
+            fnvhash(SMUKN);
+            fnvhash(PPMDP);
+            fnvhash(PPMDPFull);
             // amnesia(CTW);
             // amnesia(SM1PF);
             // amnesia(SMUKN);
             // amnesia(PPMDP);
             // amnesia(PPMDPFull);
         }
+        break;
 #undef amnesia
+#undef fnvhash
 #undef hash
 #undef plain
 #undef STRINGIFY

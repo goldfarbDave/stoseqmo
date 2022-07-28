@@ -32,6 +32,12 @@ using HashCTWModel = SequenceModel<
         VolfHistogram<AlphabetT::size>>,
     AlphabetT>;
 template <typename AlphabetT>
+using FNVHashCTWModel = SequenceModel<
+    HasherBottomUp<
+        FNVLookup,
+        VolfHistogram<AlphabetT::size>>,
+    AlphabetT>;
+template <typename AlphabetT>
 using LengthBucketHashCTWModel = SequenceModel<
     HasherBottomUp<
         LengthBucketLookup,
@@ -55,6 +61,12 @@ template <typename AlphabetT>
 using HashSMUKNModel = SequenceModel<
     HasherTopDown<
         RandomLookup,
+        SMUKNHistogram<AlphabetT::size>>,
+    AlphabetT>;
+template <typename AlphabetT>
+using FNVHashSMUKNModel = SequenceModel<
+    HasherTopDown<
+        FNVLookup,
         SMUKNHistogram<AlphabetT::size>>,
     AlphabetT>;
 template <typename AlphabetT>
@@ -92,6 +104,13 @@ template <typename AlphabetT>
 using HashSM1PFModel = SequenceModel<
     HasherTopDown<
         RandomLookup,
+        SM1PFHistogram<
+            AlphabetT::size>>,
+    AlphabetT>;
+template <typename AlphabetT>
+using FNVHashSM1PFModel = SequenceModel<
+    HasherTopDown<
+        FNVLookup,
         SM1PFHistogram<
             AlphabetT::size>>,
     AlphabetT>;
@@ -149,6 +168,21 @@ using HashPPMDPFullModel = SequenceModel<
         PPMDPHistogram<AlphabetT::size>,
         PPMUpdatePolicy::FullUpdates>,
     AlphabetT>;
+template <typename AlphabetT>
+using FNVHashPPMDPModel = SequenceModel<
+    HasherProbDownLearnUp<
+        FNVLookup,
+        PPMDPHistogram<AlphabetT::size>,
+        PPMUpdatePolicy::ShallowUpdates>,
+    AlphabetT>;
+template <typename AlphabetT>
+using FNVHashPPMDPFullModel = SequenceModel<
+    HasherProbDownLearnUp<
+        FNVLookup,
+        PPMDPHistogram<AlphabetT::size>,
+        PPMUpdatePolicy::FullUpdates>,
+    AlphabetT>;
+
 template <typename AlphabetT>
 using AmnesiaPPMDPModel = AmnesiaSequenceModel<
     ExactProbDownLearnUp<

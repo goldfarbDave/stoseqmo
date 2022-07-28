@@ -9,7 +9,6 @@ void hash_combine(std::size_t& seed, const T& v) {
     seed ^= hasher(v) + 0x9e3779b9 + (seed<<6) + (seed>>2);
 }
 
-
 class RandomLookup {
 public:
     using hash_t = size_t;
@@ -28,6 +27,45 @@ public:
         ret.push_back(seed);
         while (ctx) {
             hash_combine(seed, ctx.pop());
+            ret.push_back(seed);
+        }
+        return ret;
+    }
+    std::size_t hash_to_idx(hash_t const &hash) const {
+        return hash % num_entries;
+    }
+};
+class FNVLookup {
+    // From https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function
+    // Uses FNV-1A
+public:
+    using hash_t = size_t;
+private:
+    std::size_t num_entries;
+    //std::size_t depth;
+    static constexpr std::size_t fnv_offset{0xcbf29ce484222325};
+    static constexpr std::size_t fnv_prime{0x100000001b3};
+    static void fnv_hash_combine(std::size_t &acc, const std::size_t& new_val) {
+        static_assert(std::numeric_limits<std::size_t>::digits == 64);
+        for (int i = 0; i < 64; i+=8) {
+            auto byte = (new_val >> i) & 0xFF;
+            acc ^= byte;
+            acc *= fnv_prime;
+        }
+    }
+
+    
+public:
+    FNVLookup(std::size_t /*depth_*/, std::size_t table_size) : num_entries{table_size}
+                                                                   //, depth{depth_}
+        {}
+    std::vector<hash_t> ctx_to_hashes(IdxContext ctx) const {
+        std::vector<std::size_t> ret;
+        ret.reserve(ctx.size()+1);
+        auto seed{fnv_offset};
+        ret.push_back(seed);
+        while (ctx) {
+            fnv_hash_combine(seed, ctx.pop());
             ret.push_back(seed);
         }
         return ret;

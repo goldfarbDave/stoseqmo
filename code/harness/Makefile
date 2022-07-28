@@ -38,9 +38,9 @@ CPPFLAGS=-std=c++17 $(OPTFLAGS) $(WARNFLAGS) $(GCCONLYFLAGS) $(EXTRAWARNFLAGS) $
 
 # all: correctness
 # 	./correctness
-# all: chunked_shakespeare.csv
-all: incrementalshakespeare
-	./incrementalshakespeare > incrementalshakespeare_other.csv
+all: calgary.csv cantbry.csv
+# all: incrementalshakespeare
+# 	./incrementalshakespeare > incrementalshakespeare_other.csv
 
 %.csv: filebench
 	./filebench $(*F) | tee $(*F)_other.csv
