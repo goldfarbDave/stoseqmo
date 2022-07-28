@@ -9,7 +9,7 @@ except NameError:
     srcdir = Path("./")
 parser = argparse.ArgumentParser()
 parser.add_argument("-svg", type=Path,
-                    default=srcdir / "calgary.svg")
+                    default=srcdir / "fnv.svg")
 args = parser.parse_args()
 svgpath = args.svg
 csvpath = srcdir/"../harness/calgary.csv"
@@ -51,13 +51,12 @@ for idx, fn in enumerate(fns):
     ax = axs[r,c]
     ndf = df[df["File"] == fn]
     #for meth,color in [ ("SM1PF", 'red'),  ("SMUKN", 'blue'),("CTW", 'green'),]: ,("PPMDPFull", 'green'),
-    for meth, color in [("PPMDP", 'red'), ("SMUKN", "blue"), ("CTW", 'black')]:
+    for meth, color in [("PPMDP", 'red'), ("CTW", 'black')]:
         baseline = ndf[ndf["Meth"] == meth]
         hash_meths = ndf[ndf["Meth"] == f"Hash{meth}"].sort_values(by='MSize')
         fnv_meths = ndf[ndf["Meth"] == f"FNVHash{meth}"].sort_values(by='MSize')
-        amn_meths = ndf[ndf["Meth"] == f"Amnesia{meth}"].sort_values(by='MSize')
         ax.plot(hash_meths["MSize"].values, hash_meths["b/B"], color=color, label=f"Stochastic-{meth} Compression Ratio")
-        # ax.plot(fnv_meths["MSize"].values, fnv_meths["b/B"], color=color, linestyle="dashdot", label=f"FNV-{meth} Compression Ratio")
+        ax.plot(fnv_meths["MSize"].values, fnv_meths["b/B"], color=color, linestyle="dashdot", label=f"FNV-{meth} Compression Ratio")
         # ax.plot(amn_meths["MSize"].values, amn_meths["b/B"], color=light_color_map[color], label=f"Amnesia-{meth} Compression Ratio")
         # ax.plot(amn_meths["MSize"].values, amn_meths["b/B"], color=color, linestyle='dashdot', label=f"Amnesia-{meth} Compression Ratio")
         # ax.plot(lb_meths["MSize"].values, lb_meths["b/B"], color="purple", label=f"Length Bucket Stochastic {meth} Compression Ratio")
@@ -70,7 +69,7 @@ for idx, fn in enumerate(fns):
     ax.set_title(fn)
 xlabel = "Num of Histograms"
 ylabel = "Compressed bits/Uncompressed Byte"
-title = "Compression ratio vs Num of Histograms: Calgary"
+title = "Compression ratio vs Num of Histograms: Calgary. FNV vs boost"
 ax.legend()
 fig.supxlabel(xlabel)
 fig.supylabel(ylabel)
