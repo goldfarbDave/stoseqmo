@@ -38,7 +38,7 @@ CPPFLAGS=-std=c++17 $(OPTFLAGS) $(WARNFLAGS) $(GCCONLYFLAGS) $(EXTRAWARNFLAGS) $
 
 # all: correctness
 # 	./correctness
-all: calgary.csv
+all: shakespeare.csv
 # all: incrementalshakespeare
 # 	./incrementalshakespeare > incrementalshakespeare_other.csv
 

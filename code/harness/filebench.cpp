@@ -17,7 +17,7 @@ std::map<std::string, std::function<std::vector<Task>()>> name_to_task_map = {
 
 int main(int argc, char *argv[]) {
     // limit_gb(5);
-    int const num_threads = std::thread::hardware_concurrency();
+    int const num_threads = 8;//std::thread::hardware_concurrency();
     std::cerr << "Executing on " << num_threads << " threads\n";
     Executor<LineItem> executor{num_threads};
 
@@ -63,22 +63,22 @@ int main(int argc, char *argv[]) {
         // plain(SMUKN);
         // plain(PPMDP);
         // plain(PPMDPFull);
-        for (int log_tab_size = 7; log_tab_size < 21; ++log_tab_size) {
-            // hash(CTW);
-            // hash(SM1PF);
-            // hash(SMUKN);
-            // hash(PPMDP);
-            // hash(PPMDPFull);
-            // fnvhash(CTW);
-            // fnvhash(SM1PF);
-            // fnvhash(SMUKN);
-            // fnvhash(PPMDP);
-            // fnvhash(PPMDPFull);
-            // amnesia(CTW);
-            // amnesia(SM1PF);
-            // amnesia(SMUKN);
-            // amnesia(PPMDP);
-            // amnesia(PPMDPFull);
+        for (int log_tab_size = 21; log_tab_size < 24; ++log_tab_size) {
+            hash(CTW);
+            hash(SM1PF);
+            hash(SMUKN);
+            hash(PPMDP);
+            hash(PPMDPFull);
+            fnvhash(CTW);
+            fnvhash(SM1PF);
+            fnvhash(SMUKN);
+            fnvhash(PPMDP);
+            fnvhash(PPMDPFull);
+            amnesia(CTW);
+            amnesia(SM1PF);
+            amnesia(SMUKN);
+            amnesia(PPMDP);
+            amnesia(PPMDPFull);
             // pure0(CTW);
             // pure0(SM1PF);
             // pure0(SMUKN);
