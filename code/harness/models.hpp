@@ -38,15 +38,21 @@ using FNVHashCTWModel = SequenceModel<
         VolfHistogram<AlphabetT::size>>,
     AlphabetT>;
 template <typename AlphabetT>
-using LengthBucketHashCTWModel = SequenceModel<
+using Pure0HashCTWModel = SequenceModel<
     HasherBottomUp<
-        LengthBucketLookup,
+        PureLowCtxLookup<1>,
         VolfHistogram<AlphabetT::size>>,
     AlphabetT>;
 template <typename AlphabetT>
-using DepthSeededHashCTWModel = SequenceModel<
+using Pure1HashCTWModel = SequenceModel<
     HasherBottomUp<
-        DepthSeededLookup,
+        PureLowCtxLookup<2>,
+        VolfHistogram<AlphabetT::size>>,
+    AlphabetT>;
+template <typename AlphabetT>
+using Pure2HashCTWModel = SequenceModel<
+    HasherBottomUp<
+        PureLowCtxLookup<3>,
         VolfHistogram<AlphabetT::size>>,
     AlphabetT>;
 
@@ -74,22 +80,23 @@ using AmnesiaSMUKNModel = AmnesiaSequenceModel<
     AmortizedSM<
         SMUKNHistogram<AlphabetT::size>>,
     AlphabetT>;
+
 template <typename AlphabetT>
-using HashPureZCTXSMUKNModel = SequenceModel<
+using Pure0HashSMUKNModel = SequenceModel<
     HasherTopDown<
-        PureZCTXLookup,
+        PureLowCtxLookup<1>,
         SMUKNHistogram<AlphabetT::size>>,
     AlphabetT>;
 template <typename AlphabetT>
-using LengthBucketHashSMUKNModel = SequenceModel<
+using Pure1HashSMUKNModel = SequenceModel<
     HasherTopDown<
-        LengthBucketLookup,
+        PureLowCtxLookup<2>,
         SMUKNHistogram<AlphabetT::size>>,
     AlphabetT>;
 template <typename AlphabetT>
-using DepthSeededHashSMUKNModel = SequenceModel<
+using Pure2HashSMUKNModel = SequenceModel<
     HasherTopDown<
-        DepthSeededLookup,
+        PureLowCtxLookup<3>,
         SMUKNHistogram<AlphabetT::size>>,
     AlphabetT>;
 
@@ -121,38 +128,31 @@ using AmnesiaSM1PFModel = AmnesiaSequenceModel<
             AlphabetT::size>>,
     AlphabetT>;
 template <typename AlphabetT>
-using HashPureZCTXSM1PFModel = SequenceModel<
+using Pure0HashSM1PFModel = SequenceModel<
     HasherTopDown<
-        PureZCTXLookup,
-        SM1PFHistogram<
-            AlphabetT::size>>,
-    AlphabetT>;
-template <typename AlphabetT>
-using LengthBucketHashSM1PFModel = SequenceModel<
-    HasherTopDown<
-        LengthBucketLookup,
+        PureLowCtxLookup<1>,
         SM1PFHistogram<AlphabetT::size>>,
     AlphabetT>;
 template <typename AlphabetT>
-using DepthSeededHashSM1PFModel = SequenceModel<
+using Pure1HashSM1PFModel = SequenceModel<
     HasherTopDown<
-        DepthSeededLookup,
+        PureLowCtxLookup<2>,
+        SM1PFHistogram<AlphabetT::size>>,
+    AlphabetT>;
+template <typename AlphabetT>
+using Pure2HashSM1PFModel = SequenceModel<
+    HasherTopDown<
+        PureLowCtxLookup<3>,
         SM1PFHistogram<AlphabetT::size>>,
     AlphabetT>;
 
 
-
+// PPM-DP Shallow
 template <typename AlphabetT>
 using PPMDPModel = SequenceModel<
     ExactProbDownLearnUp<
         PPMDPHistogram<AlphabetT::size>,
         PPMUpdatePolicy::ShallowUpdates>,
-    AlphabetT>;
-template <typename AlphabetT>
-using PPMDPFullModel = SequenceModel<
-    ExactProbDownLearnUp<
-        PPMDPHistogram<AlphabetT::size>,
-        PPMUpdatePolicy::FullUpdates>,
     AlphabetT>;
 template <typename AlphabetT>
 using HashPPMDPModel = SequenceModel<
@@ -162,18 +162,52 @@ using HashPPMDPModel = SequenceModel<
         PPMUpdatePolicy::ShallowUpdates>,
     AlphabetT>;
 template <typename AlphabetT>
-using HashPPMDPFullModel = SequenceModel<
-    HasherProbDownLearnUp<
-        RandomLookup,
-        PPMDPHistogram<AlphabetT::size>,
-        PPMUpdatePolicy::FullUpdates>,
-    AlphabetT>;
-template <typename AlphabetT>
 using FNVHashPPMDPModel = SequenceModel<
     HasherProbDownLearnUp<
         FNVLookup,
         PPMDPHistogram<AlphabetT::size>,
         PPMUpdatePolicy::ShallowUpdates>,
+    AlphabetT>;
+template <typename AlphabetT>
+using AmnesiaPPMDPModel = AmnesiaSequenceModel<
+    ExactProbDownLearnUp<
+        PPMDPHistogram<AlphabetT::size>,
+        PPMUpdatePolicy::ShallowUpdates>,
+    AlphabetT>;
+template <typename AlphabetT>
+using Pure0HashPPMDPModel = SequenceModel<
+    HasherProbDownLearnUp<
+        PureLowCtxLookup<1>,
+        PPMDPHistogram<AlphabetT::size>,
+        PPMUpdatePolicy::ShallowUpdates>,
+    AlphabetT>;
+template <typename AlphabetT>
+using Pure1HashPPMDPModel = SequenceModel<
+    HasherProbDownLearnUp<
+        PureLowCtxLookup<2>,
+        PPMDPHistogram<AlphabetT::size>,
+        PPMUpdatePolicy::ShallowUpdates>,
+    AlphabetT>;
+template <typename AlphabetT>
+using Pure2HashPPMDPModel = SequenceModel<
+    HasherProbDownLearnUp<
+        PureLowCtxLookup<3>,
+        PPMDPHistogram<AlphabetT::size>,
+        PPMUpdatePolicy::ShallowUpdates>,
+    AlphabetT>;
+// PPM-DP Full
+template <typename AlphabetT>
+using PPMDPFullModel = SequenceModel<
+    ExactProbDownLearnUp<
+        PPMDPHistogram<AlphabetT::size>,
+        PPMUpdatePolicy::FullUpdates>,
+    AlphabetT>;
+template <typename AlphabetT>
+using HashPPMDPFullModel = SequenceModel<
+    HasherProbDownLearnUp<
+        RandomLookup,
+        PPMDPHistogram<AlphabetT::size>,
+        PPMUpdatePolicy::FullUpdates>,
     AlphabetT>;
 template <typename AlphabetT>
 using FNVHashPPMDPFullModel = SequenceModel<
@@ -182,19 +216,34 @@ using FNVHashPPMDPFullModel = SequenceModel<
         PPMDPHistogram<AlphabetT::size>,
         PPMUpdatePolicy::FullUpdates>,
     AlphabetT>;
-
-template <typename AlphabetT>
-using AmnesiaPPMDPModel = AmnesiaSequenceModel<
-    ExactProbDownLearnUp<
-        PPMDPHistogram<AlphabetT::size>,
-        PPMUpdatePolicy::ShallowUpdates>,
-    AlphabetT>;
 template <typename AlphabetT>
 using AmnesiaPPMDPFullModel = AmnesiaSequenceModel<
     ExactProbDownLearnUp<
         PPMDPHistogram<AlphabetT::size>,
         PPMUpdatePolicy::FullUpdates>,
     AlphabetT>;
+template <typename AlphabetT>
+using Pure0HashPPMDPFullModel = SequenceModel<
+    HasherProbDownLearnUp<
+        PureLowCtxLookup<1>,
+        PPMDPHistogram<AlphabetT::size>,
+        PPMUpdatePolicy::FullUpdates>,
+    AlphabetT>;
+template <typename AlphabetT>
+using Pure1HashPPMDPFullModel = SequenceModel<
+    HasherProbDownLearnUp<
+        PureLowCtxLookup<2>,
+        PPMDPHistogram<AlphabetT::size>,
+        PPMUpdatePolicy::FullUpdates>,
+    AlphabetT>;
+template <typename AlphabetT>
+using Pure2HashPPMDPFullModel = SequenceModel<
+    HasherProbDownLearnUp<
+        PureLowCtxLookup<3>,
+        PPMDPHistogram<AlphabetT::size>,
+        PPMUpdatePolicy::FullUpdates>,
+    AlphabetT>;
+
 // NB SM variants
 // NBUKN
 // template <std::size_t size>
@@ -220,25 +269,6 @@ using AmnesiaPPMDPFullModel = AmnesiaSequenceModel<
 //         NBSMUKNHistogram<
 //             AlphabetT::size>>,
 //     AlphabetT>;
-// template <typename AlphabetT>
-// using HashPureZCTXNBSMUKNModel = SequenceModel<
-//     HasherTopDown<
-//         PureZCTXLookup,
-//         NBSMUKNHistogram<
-//             AlphabetT::size>>,
-//     AlphabetT>;
-// template <typename AlphabetT>
-// using LengthBucketHashNBSMUKNModel = SequenceModel<
-//     HasherTopDown<
-//         LengthBucketLookup,
-//         NBSMUKNHistogram<AlphabetT::size>>,
-//     AlphabetT>;
-// template <typename AlphabetT>
-// using DepthSeededHashNBSMUKNModel = SequenceModel<
-//     HasherTopDown<
-//         DepthSeededLookup,
-//         NBSMUKNHistogram<AlphabetT::size>>,
-//     AlphabetT>;
 // // NB1PF
 // template <typename AlphabetT>
 // using NBSM1PFModel = SequenceModel<
@@ -258,23 +288,4 @@ using AmnesiaPPMDPFullModel = AmnesiaSequenceModel<
 //     AmortizedSM<
 //         NBSM1PFHistogram<
 //             AlphabetT::size>>,
-//     AlphabetT>;
-// template <typename AlphabetT>
-// using HashPureZCTXNBSM1PFModel = SequenceModel<
-//     HasherTopDown<
-//         PureZCTXLookup,
-//         NBSM1PFHistogram<
-//             AlphabetT::size>>,
-//     AlphabetT>;
-// template <typename AlphabetT>
-// using LengthBucketHashNBSM1PFModel = SequenceModel<
-//     HasherTopDown<
-//         LengthBucketLookup,
-//         NBSM1PFHistogram<AlphabetT::size>>,
-//     AlphabetT>;
-// template <typename AlphabetT>
-// using DepthSeededHashNBSM1PFModel = SequenceModel<
-//     HasherTopDown<
-//         DepthSeededLookup,
-//         NBSM1PFHistogram<AlphabetT::size>>,
 //     AlphabetT>;

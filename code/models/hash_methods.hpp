@@ -1,5 +1,6 @@
 #pragma once
 #include <vector>
+#include <limits>
 #include "model_ctx.hpp"
 
 // Boost's impl
@@ -74,45 +75,6 @@ public:
         return hash % num_entries;
     }
 };
-class PureZCTXLookup {
-public:
-    using hash_t = size_t;
-private:
-    std::size_t num_entries;
-    //std::size_t depth;
-    std::size_t start_seed{0};
-
-    template <class T>
-    inline void guarded_hash_combine(std::size_t& seed, const T& v, std::size_t guard_seed) const {
-        std::hash<T> hasher;
-        seed ^= hasher(v) + 0x9e3779b9 + (seed<<6) + (seed>>2);
-        if (seed == guard_seed) {
-            seed += 1;
-        }
-    }
-public:
-    PureZCTXLookup(std::size_t /*depth_*/, std::size_t table_size) : num_entries{table_size}
-                                                                   // , depth{depth_}
-        {}
-    std::vector<hash_t> ctx_to_hashes(IdxContext ctx) const {
-        std::vector<hash_t> ret;
-        ret.reserve(ctx.size()+1);
-        auto seed{start_seed};
-        ret.push_back(seed);
-        while (ctx) {
-            guarded_hash_combine(seed, ctx.pop(), start_seed);
-            ret.push_back(seed);
-        }
-        return ret;
-    }
-    std::size_t hash_to_idx(hash_t const &hash) const {
-        if (hash == start_seed) {
-            return 0;
-        }
-        auto loc = hash % num_entries;
-        return loc ? loc : 1;
-    }
-};
 
 
 // Let's only let equal-sized contexts share the same buckets, and
@@ -166,6 +128,82 @@ public:
         while (ctx) {
             hash_combine(seed, ctx.pop());
             ret.push_back(Key{.depth=depth++, .hash=seed});
+        }
+        return ret;
+    }
+};
+template <std::size_t low_ctx_end>
+class PureLowCtxLookup {
+public:
+//private:
+    struct Key {
+        std::size_t depth;
+        std::size_t hash;
+        std::array<std::size_t, 2> pure_items;
+    };
+public:
+    using hash_t = Key;
+    using se_t = std::pair<std::size_t, std::size_t>;
+public:
+    std::size_t m_num_entries;
+    std::size_t m_depth;
+    std::size_t m_start_seed{0};
+    std::size_t m_hash_start{};
+    std::size_t m_hash_size{};
+public:
+    PureLowCtxLookup(std::size_t depth_, std::size_t table_size) : m_num_entries{table_size}
+                                                                 , m_depth{depth_}{
+        static_assert(low_ctx_end <= 3);
+        static_assert(low_ctx_end > 0);
+        assert(low_ctx_end < m_depth);
+        switch(low_ctx_end) {
+        case 1: {
+            m_hash_start = 1;
+            break;
+        }
+        case 2: {
+            m_hash_start = (256+1);
+            break;
+        }
+        case 3: {
+            m_hash_start = (256+1)*256;
+            break;
+        }
+        }
+        m_hash_size = m_num_entries-m_hash_start;
+        assert(m_hash_start < m_num_entries);
+    }
+    std::size_t hash_to_idx(hash_t const& hash) const {
+        auto const d = hash.depth;
+        if (d < low_ctx_end) {
+            // appropriate offset is
+            auto p_idx = 0UL;
+            if (d == 0) return 0;
+            p_idx = 1 + hash.pure_items[0];
+            if (d == 1) return p_idx;
+            return p_idx*256 + hash.pure_items[1];
+        }
+        return  m_hash_start+ (hash.hash % m_hash_size) ;
+
+    }
+    std::vector<hash_t> ctx_to_hashes(IdxContext ctx) const {
+        std::vector<hash_t> ret;
+        ret.reserve(ctx.size()+1);
+        auto seed{m_start_seed};
+        auto depth{0};
+        std::array<std::size_t, 2> items{};
+        ret.push_back(Key{.depth=static_cast<size_t>(depth++), .hash=seed, .pure_items=items});
+        for (std::size_t i = 0; i <low_ctx_end-1; ++i) {
+            if (!ctx) break;
+            auto const ctx_item = ctx.pop();
+            items[i] = ctx_item;
+            hash_combine(seed, ctx_item);
+            ret.push_back(Key{.depth=static_cast<size_t>(depth++), .hash=seed, .pure_items=items});
+        }
+        // Use standard method for the rest
+        while (ctx) {
+            hash_combine(seed, ctx.pop());
+            ret.push_back(Key{.depth=static_cast<size_t>(depth++), .hash=seed, .pure_items=items});
         }
         return ret;
     }

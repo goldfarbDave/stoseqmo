@@ -1,6 +1,7 @@
 #pragma once
 // Utilities to deal with strongly-typed bits and bytes, as well as general typedefs
 #include <array>
+#include <cstdint>
 #include <cassert>
 #include <type_traits>
 #include <vector>

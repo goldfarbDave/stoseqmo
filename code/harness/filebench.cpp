@@ -49,7 +49,15 @@ int main(int argc, char *argv[]) {
 #define amnesia(str) wrap_task(tab_factory<Amnesia##str##Model>(\
                                    STRINGIFY(Amnesia##str),     \
                                    1UL <<log_tab_size))
-
+#define pure0(str) wrap_task(tab_factory<Pure0Hash##str##Model>(    \
+                                 STRINGIFY(Pure0Hash##str##Model),  \
+                                 1UL<<log_tab_size))
+#define pure1(str) wrap_task(tab_factory<Pure1Hash##str##Model>(    \
+                                 STRINGIFY(Pure1Hash##str##Model),  \
+                                 1UL<<log_tab_size))
+#define pure2(str) wrap_task(tab_factory<Pure2Hash##str##Model>(    \
+                                 STRINGIFY(Pure2Hash##str##Model),  \
+                                 1UL<<log_tab_size))
         // plain(CTW);
         // plain(SM1PF);
         // plain(SMUKN);
@@ -61,18 +69,39 @@ int main(int argc, char *argv[]) {
             // hash(SMUKN);
             // hash(PPMDP);
             // hash(PPMDPFull);
-            fnvhash(CTW);
-            fnvhash(SM1PF);
-            fnvhash(SMUKN);
-            fnvhash(PPMDP);
-            fnvhash(PPMDPFull);
+            // fnvhash(CTW);
+            // fnvhash(SM1PF);
+            // fnvhash(SMUKN);
+            // fnvhash(PPMDP);
+            // fnvhash(PPMDPFull);
             // amnesia(CTW);
             // amnesia(SM1PF);
             // amnesia(SMUKN);
             // amnesia(PPMDP);
             // amnesia(PPMDPFull);
+            pure0(CTW);
+            pure0(SM1PF);
+            pure0(SMUKN);
+            pure0(PPMDP);
+            pure0(PPMDPFull);
+            if (log_tab_size > 8) {
+                pure1(CTW);
+                pure1(SM1PF);
+                pure1(SMUKN);
+                pure1(PPMDP);
+                pure1(PPMDPFull);
+            }
+            if (log_tab_size > 16) {
+                pure2(CTW);
+                pure2(SM1PF);
+                pure2(SMUKN);
+                pure2(PPMDP);
+                pure2(PPMDPFull);
+            }
         }
-        break;
+#undef pure2
+#undef pure1
+#undef pure0
 #undef amnesia
 #undef fnvhash
 #undef hash

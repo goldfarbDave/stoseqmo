@@ -46,9 +46,27 @@ void correctness_and_entropy_test(ModelCtorT ctor) {
 
 int main() {
     limit_gb(3);
+    // correctness_and_entropy_test([]() {
+    //     return Pure0HashCTWModel<ByteAlphabet>(8, 1UL<<20);
+    // });
+    // correctness_and_entropy_test([]() {
+    //     return Pure1HashCTWModel<ByteAlphabet>(8, 1UL<<20);
+    // });
+    // correctness_and_entropy_test([]() {
+    //     return Pure2HashCTWModel<ByteAlphabet>(8, 1UL<<20);
+    // });
     correctness_and_entropy_test([]() {
-        return VolfCTWModel<ByteAlphabet>(8);
+        return Pure0HashSMUKNModel<ByteAlphabet>(8, 1UL<<20);
     });
+    correctness_and_entropy_test([]() {
+        return Pure1HashSMUKNModel<ByteAlphabet>(8, 1UL<<20);
+    });
+    correctness_and_entropy_test([]() {
+        return Pure2HashSMUKNModel<ByteAlphabet>(8, 1UL<<20);
+    });
+    // correctness_and_entropy_test([]() {
+    //     return VolfCTWModel<ByteAlphabet>(8);
+    // });
     // correctness_and_entropy_test([]() {
     //     return AmnesiaVolfCTWModel<ByteAlphabet>(8, 20'000);
     // });
@@ -58,12 +76,12 @@ int main() {
     // correctness_and_entropy_test([]() {
     //     return DepthSeededHashCTWModel<ByteAlphabet>(8, 24983UL);
     // });
-    correctness_and_entropy_test([]() {
-        return SM1PFModel<ByteAlphabet>(8);
-    });
-    correctness_and_entropy_test([]() {
-        return PPMDPModel<ByteAlphabet>(8);
-    });
+    // correctness_and_entropy_test([]() {
+    //     return SM1PFModel<ByteAlphabet>(8);
+    // });
+    // correctness_and_entropy_test([]() {
+    //     return PPMDPModel<ByteAlphabet>(8);
+    // });
     // correctness_and_entropy_test([]() {
     //     return HashPPMDPModel<ByteAlphabet>(8, 30000UL);
     // });

@@ -38,12 +38,12 @@ CPPFLAGS=-std=c++17 $(OPTFLAGS) $(WARNFLAGS) $(GCCONLYFLAGS) $(EXTRAWARNFLAGS) $
 
 # all: correctness
 # 	./correctness
-all: calgary.csv cantbry.csv
+all: calgary.csv
 # all: incrementalshakespeare
 # 	./incrementalshakespeare > incrementalshakespeare_other.csv
 
 %.csv: filebench
-	./filebench $(*F) | tee $(*F)_other.csv
+	time ./filebench $(*F) | tee $(*F)_other.csv
 
 incrementalshakespeare: incrementalshakespeare.cpp $(HEADERS) $(MAKEFILE_LIST)
 	g++ $(CPPFLAGS) $< -o $@
