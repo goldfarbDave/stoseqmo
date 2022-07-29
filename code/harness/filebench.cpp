@@ -17,7 +17,7 @@ std::map<std::string, std::function<std::vector<Task>()>> name_to_task_map = {
 
 int main(int argc, char *argv[]) {
     // limit_gb(5);
-    int const num_threads = 1; //std::thread::hardware_concurrency();
+    int const num_threads = std::thread::hardware_concurrency();
     std::cerr << "Executing on " << num_threads << " threads\n";
     Executor<LineItem> executor{num_threads};
 
@@ -34,7 +34,6 @@ int main(int argc, char *argv[]) {
     }();
     std::cout << LineItem::header() << std::endl;
     for (auto const &task: tasks) {
-        if (task.file_name != "progp") continue;
         auto wrap_task = [task, &executor](auto ctor){executor.push_back([task, ctor](){return run_task(task, ctor);});};
         // Convinience macros for more ergonomic typing. Could do XMacro, but it's nice to have comment-out-able list
 // #define pw(str, mod) wrap_task(plain_factory<mod>(str))
@@ -64,12 +63,11 @@ int main(int argc, char *argv[]) {
         // plain(SMUKN);
         // plain(PPMDP);
         // plain(PPMDPFull);
-        // for (int log_tab_size = 7; log_tab_size < 8; ++log_tab_size) {
-        for (int log_tab_size = 20; log_tab_size < 30; ++log_tab_size) {
+        for (int log_tab_size = 7; log_tab_size < 21; ++log_tab_size) {
             // hash(CTW);
             // hash(SM1PF);
             // hash(SMUKN);
-            hash(PPMDP);
+            // hash(PPMDP);
             // hash(PPMDPFull);
             // fnvhash(CTW);
             // fnvhash(SM1PF);
