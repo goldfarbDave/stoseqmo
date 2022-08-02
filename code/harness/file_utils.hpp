@@ -12,13 +12,14 @@ struct LineItem {
     std::string mn;
     std::size_t fs;
     Footprint ms;
+    std::size_t model_depth;
     double entropy;
     static std::string header() {
-        return "File,Meth,FSize,MSize,Entropy";
+        return "File,Meth,FSize,MDepth,MSize,Entropy";
     }
     std::string line() const {
         std::ostringstream ss;
-        ss << fn << "," << mn << "," << fs << "," << ms.num_nodes << ","
+        ss << fn << "," << mn << "," << fs << "," << model_depth << "," << ms.num_nodes << ","
            << std::setprecision(7)
            << entropy;
         return ss.str();
@@ -29,14 +30,15 @@ struct IncrementalItem {
     std::string mn;
     std::size_t fs;
     Footprint ms;
+    std::size_t model_depth;
     std::vector<prob_t> logprob_vec;
     double entropy;
     static std::string header() {
-        return "File,Byte,Meth,FSize,MSize,Entropy";
+        return "File,Byte,Meth,FSize,MDepth,MSize,Entropy";
     }
     std::string preamble() const {
         std::ostringstream ss;
-        ss << fn << "," << mn << "," << fs << "," << ms.num_nodes << ","
+        ss << fn << "," << mn << "," << fs << "," << model_depth << "," << ms.num_nodes << ","
            << std::setprecision(7)
            << entropy;
         return ss.str();
@@ -68,6 +70,7 @@ LineItem run_task(Task task, ModelCtorT ctor) {
                     .mn=model_name,
                     .fs=task.file_bytes.size(),
                     .ms=res.model.footprint(),
+                    .model_depth=res.model.depth,
                     .entropy=res.H};
 }
 
@@ -78,6 +81,7 @@ IncrementalItem run_incremental_task(Task task, ModelCtorT ctor) {
     return IncrementalItem{.fn=task.file_name,
                            .mn=model_name,
                            .fs=task.file_bytes.size(),
+                           .model_depth=res.model.depth,
                            .ms=res.model.footprint(),
                            .logprob_vec=res.logprob_vec,
                            .entropy=res.entropy};
@@ -132,15 +136,14 @@ std::vector<Task> get_shakespeare_tasks() {
 std::vector<Task> get_cantbry_tasks() {
     return get_corpus_tasks(cantbry_names, cantbry_name_to_path);
 }
-constexpr auto DEPTH = 8;
 
 template<template<typename AlphabetUsed> class ModelT>
-auto plain_factory(std::string const &str) {
-    return [str](){return std::make_pair(str, ModelT<ByteAlphabet>(DEPTH));};
+auto plain_factory(std::size_t depth, std::string const &str) {
+    return [str,depth](){return std::make_pair(str, ModelT<ByteAlphabet>(depth));};
 }
 template<template<typename AlphabetUsed> class ModelT>
-auto tab_factory(std::string const &str, std::size_t tab_size) {
-    return [str, tab_size](){
+auto tab_factory(std::size_t depth, std::string const &str, std::size_t tab_size) {
+    return [str, tab_size, depth](){
         return std::make_pair(str,
-                              ModelT<ByteAlphabet>(DEPTH, tab_size));};
+                              ModelT<ByteAlphabet>(depth, tab_size));};
 }

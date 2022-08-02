@@ -41,7 +41,7 @@ public:
     }
 public:
     static constexpr ProbAr get_prior() {
-        ProbAr ret;
+        ProbAr ret{};
         std::fill(ret.begin(), ret.end(), 1.0/size);
         return ret;
     }
@@ -101,7 +101,7 @@ private:
     }
 public:
     static constexpr ProbAr get_prior() {
-        ProbAr ret;
+        ProbAr ret{};
         std::fill(ret.begin(), ret.end(), 1.0/size);
         return ret;
     }
@@ -214,7 +214,7 @@ public:
     }
     ProbAr get_probs(IdxContext const &ctx) const {
         auto idxs = get_idx_chain(ctx);
-        ProbAr ret;
+        ProbAr ret{};
         if (idxs.size() <= ctx.size()+1) {
             ret = m_vec[idxs.back()].get_probs();
             idxs.pop_back();

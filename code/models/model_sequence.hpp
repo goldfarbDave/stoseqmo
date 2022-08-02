@@ -33,11 +33,12 @@ private:
     mutable ProbAr m_cached{};
     mutable bool m_valid{};
 public:
-
+    std::size_t depth;
     template <typename... Args>
-    SequenceModel(std::size_t depth, Args&&... args)
-        : m_past_idxs{depth}
-        , m_underlying{depth, std::forward<Args>(args)...} {}
+    SequenceModel(std::size_t depth_, Args&&... args)
+        : m_past_idxs{depth_}
+        , m_underlying{depth_, std::forward<Args>(args)...}
+        , depth{depth_} {}
     ProbAr get_probs() const {
         if (m_valid) {
             return m_cached;
@@ -69,11 +70,13 @@ private:
     std::size_t m_max_nodes;
     std::size_t m_depth;
 public:
-    AmnesiaSequenceModel(std::size_t depth, std::size_t max_nodes)
-        : m_past_idxs{depth}
-        , m_underlying{depth}
+    std::size_t depth;
+    AmnesiaSequenceModel(std::size_t depth_, std::size_t max_nodes)
+        : m_past_idxs{depth_}
+        , m_underlying{depth_}
         , m_max_nodes{max_nodes}
-        , m_depth{depth} {}
+        , m_depth{depth_}
+        , depth{depth_} {}
     auto get_probs() const {
         return m_underlying.get_probs(m_past_idxs.view());
     }
