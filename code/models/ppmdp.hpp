@@ -127,15 +127,17 @@ public:
         m_adj[0];
     }
     ProbAr get_probs(IdxContext const &ctx) const {
-        auto ret = Node::get_prior();
+
         auto depth = 0;
-        auto idx = 0Ul;
-        for (IdxContext c = ctx; c; c.pop(), depth++) {
-            ret = m_vec[idx].transform_probs(ret, depth);
-            idx = get_child(idx, c.back());
-            if (!idx) {
+        auto idx = 0;
+        auto ret = m_vec[idx].transform_probs(Node::get_prior(), depth++);
+        for (IdxContext c = ctx; c; c.pop()) {
+            auto const child_idx = get_child(idx, c.back());
+            if (!child_idx) {
                 break;
             }
+            ret = m_vec[child_idx].transform_probs(ret, depth++);
+            idx = child_idx;
         }
         // auto const prior=Node::get_prior();
         // std::transform(ret.begin(),ret.end(), prior.begin(), ret.begin(),

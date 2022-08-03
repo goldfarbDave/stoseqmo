@@ -19,9 +19,9 @@ df = df.join((df["Entropy"]/df["FSize"]).to_frame(name="b/B"))
 
 fns = np.unique(df["File"])
 ddf = df[df["File"] == "progp"]
-for depth,color in [(6,'red'), (11, "purple")]:
+for depth,color in [(6,'red'), (7, "blue"), (8, "green")]:#(11, "purple")]:
     ndf = ddf[ddf["MDepth"] == depth]
-    for meth in ["PPMDP"]:#, ("SMUKN", 'blue'),("CTW", 'black')]:
+    for meth in ["SM1PF"]:#"PPMDP"]:#, ("SMUKN", 'blue'),("CTW", 'black')]:
         baseline = ndf[ndf["Meth"] == meth]
         hash_meths = ndf[ndf["Meth"] == f"Hash{meth}"].sort_values(by='MSize')
         fnv_meths = ndf[ndf["Meth"] == f"FNVHash{meth}"].sort_values(by='MSize')
