@@ -83,7 +83,7 @@ private:
     std::size_t m_depth;
     std::vector<Ptr_t> get_idx_chain(IdxContext const &ctx) const {
         std::vector<Ptr_t> idxs;
-        idxs.reserve(m_depth);
+        idxs.reserve(m_depth+1);
         idxs.push_back(0U);
         for (IdxContext c= ctx; c; c.pop()) {
             auto const parent_idx = idxs.back();

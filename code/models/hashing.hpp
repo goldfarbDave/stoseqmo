@@ -167,9 +167,10 @@ public:
     ProbAr get_probs(IdxContext const &ctx) const {
         auto hashed_idxs = m_hasher.ctx_to_hashes(ctx);
         auto depth = 0;
-        auto ret = std::accumulate(hashed_idxs.cbegin(),
+        auto const prior = Node::get_prior();
+        auto ret = std::accumulate(std::next(hashed_idxs.cbegin()),
                                    hashed_idxs.cend(),
-                                   Node::get_prior(),
+                                   lookup(hashed_idxs[0]).transform_probs(prior, depth++),
                                    [&depth, this](ProbAr const &acc, auto const &idx) {
                                        return lookup(idx).transform_probs(acc, depth++);
                                    });
