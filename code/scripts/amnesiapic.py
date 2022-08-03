@@ -19,7 +19,7 @@ df = df.join((df["Entropy"]/df["FSize"]).to_frame(name="b/B"))
 
 fns = np.unique(df["File"])
 ndf = df[df["File"] == "pic"]
-for meth, color in [("PPMDP", 'red'), ("SMUKN", 'blue'),("CTW", 'black')]:
+for meth, color in [("PPMDP", 'red'), ("CTW", 'black')]: #("SMUKN", 'blue'),
     baseline = ndf[ndf["Meth"] == meth]
     hash_meths = ndf[ndf["Meth"] == f"Hash{meth}"].sort_values(by='MSize')
     amn_meths = ndf[ndf["Meth"] == f"Amnesia{meth}"].sort_values(by='MSize')
