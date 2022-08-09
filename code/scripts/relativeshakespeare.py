@@ -20,15 +20,14 @@ for meth in ["CTW","SMUKN", "SM1PF", "PPMDP", "PPMDPFull"]:
     baseline_tsize = baseline["MSize"]
     hash_meths = hash_meths.sort_values(by="PropBaselineSize")
     plt.plot(hash_meths["PropBaselineSize"].values, hash_meths["PropBaselineEnt"].values,
-             label=f"{common.to_nmeth(meth)}",
              **common.get_style_dict(hmstr))
     amn_meths = amn_meths.sort_values(by="PropBaselineSize")
     plt.plot(amn_meths["PropBaselineSize"].values, amn_meths["PropBaselineEnt"].values,
-             label=f"{common.to_amnesia(meth)}",
              **common.get_style_dict(amnstr))
+sdict = common.get_style_dict("Unbounded")
+sdict["label"] = "Unbounded"
 plt.axhline(y=1,
-            label="Unbounded",
-            **common.get_style_dict("Unbounded"))
+            **sdict)
 plt.xlim(-.01,1)
 plt.ylim(.7, 1.01)
 plt.xlabel("Proportion of Unbounded Model Size")

@@ -36,32 +36,35 @@ meth_cmap = {
 }
 
 def to_nmeth(meth_name):
-    return f"Hash{meth_name}"
+    return f"{meth_name} (with Hashing)"
 def to_amnesia(meth_name):
-    return f"Amnesia{meth_name}"
+    return f"{meth_name} (with Amnesia)"
 def to_fnv(meth_name):
-    return f"FNVHash{meth_name}"
+    return f"{meth_name} (with FNV Hashing)"
 def get_style_dict(meth):
     if meth in meth_cmap.keys():
         return {"linestyle": "dashed",
-                "color": meth_cmap[meth]}
+                "color": meth_cmap[meth],
+                "label": meth}
     if meth == "Unbounded":
         return {"linestyle": "dotted",
-                "color": "black"}
+                "color": "black",
+                "label": "Unbounded Histograms Used"}
     if meth.startswith("Hash"):
         mname = meth[len("Hash"):]
         return {"linestyle": "solid",
-                "color": meth_cmap[mname]}
+                "color": meth_cmap[mname],
+                "label": to_nmeth(mname)}
     if meth.startswith("FNVHash"):
         mname = meth[len("FNVHash"):]
         return {"linestyle": (0, (1,1)), #"densely dotted",
-                "color": meth_cmap[mname]}
-
+                "color": meth_cmap[mname],
+                "label": to_fnv(mname)}
     if meth.startswith("Amnesia"):
         mname = meth[len("Amnesia"):]
         return {"linestyle": (0, (5,1)), #"densely dashed",
-                "color": meth_cmap[mname]}
-
+                "color": meth_cmap[mname],
+                "label": to_amnesia(mname)}
     else:
         import sys
         print("UNRESOLVED STYLE FOR: " + meth)

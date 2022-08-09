@@ -19,14 +19,11 @@ for meth in ["CTW", "SMUKN", "SM1PF", "PPMDP", "PPMDPFull"]:
     baseline_tsize = baseline["MSize"]
     hash_meths = hash_meths.sort_values(by="PropBestSize")
     plt.plot(hash_meths["PropBestSize"].values, hash_meths["PropBestEnt"].values,
-             label=f"{common.to_nmeth(meth)}",
              **common.get_style_dict(hmstr))
     amn_meths = amn_meths.sort_values(by="PropBestSize")
     plt.plot(amn_meths["PropBestSize"].values, amn_meths["PropBestEnt"].values,
-             label=f"{common.to_amnesia(meth)}",
              **common.get_style_dict(amnstr))
 plt.axhline(y=1,
-            label="SM1PF",
             **common.get_style_dict("SM1PF"))
 plt.xlim(-.01,1)
 plt.ylim(.7, 1.01)
