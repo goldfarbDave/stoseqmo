@@ -5,34 +5,27 @@ df = common.get_csv_df("calgary.csv")
 # Add b/B
 df = df.join((df["Entropy"]/df["FSize"]).to_frame(name="b/B"))
 fns = np.unique(df["File"])
-shape = (3,6)
-fig, axs = plt.subplots(*shape)
-plt.subplots_adjust(
-    top=0.88,
-bottom=0.11,
-left=0.11,
-right=0.9,
-hspace=0.2,
-wspace=0.2
-)
-dpi = fig.get_dpi()
+wanted_fns = ["bib", "book1", "obj1", "pic", "progp"]
 
-fig.set_size_inches(1920/dpi, 1200/dpi)
-coords = np.arange(18).reshape(3,6)
-to_coords = lambda idx: (np.where(coords==idx)[0][0], np.where(coords==idx)[1][0])
-light_color_map = {
-    "red": "lightcoral",
-    "blue": "lightblue",
-    "green": "lightgreen"
-}
+shape = (3, 2)
+fig, axs = plt.subplots(*shape, sharex='col')
+dpi = fig.get_dpi()
+fig.set_size_inches(6, 9)
+ax_l = [(0,0),
+        (1,0),
+        (2,0),
+        (0,1),
+        (2,1)]
+#scapegoat axis for legend
+sg_ax = axs[1,1]
+sg_ax.clear()
+sg_ax.set_axis_off()
 steppingmap = {"red": {k:v for k, v in zip(range(3),["peachpuff", "sandybrown", "saddlebrown"])},
                "blue": {k:v for k, v in zip(range(3),["lightcyan", "cyan", "darkcyan"])},
                "black": {k:v for k, v in zip(range(3),["lightgrey", "grey", "darkgrey"])},}
 widthmap =  {k:v for k,v in zip(range(3), [3, 2, 1])}
-binary_data_fns = {"obj1", "obj2", "pic", "geo"}
-for idx, fn in enumerate(fns):
-    r,c = to_coords(idx)
-    ax = axs[r,c]
+for idx, fn in enumerate(wanted_fns):
+    ax = axs[ax_l[idx][0], ax_l[idx][1]]
     ndf = df[df["File"] == fn]
     for meth in ["PPMDP"]:
         baseline = ndf[ndf["Meth"] == meth]
@@ -61,7 +54,8 @@ for idx, fn in enumerate(fns):
 xlabel = "Num of Histograms"
 ylabel = "Compressed bits/Uncompressed Byte"
 title = "Compression ratio vs Num of Histograms: Calgary. Pure"
-ax.legend()
+handles,labels = ax.get_legend_handles_labels()
+sg_ax.legend(handles, labels, loc="center")
 fig.supxlabel(xlabel)
 fig.supylabel(ylabel)
 fig.suptitle(title)

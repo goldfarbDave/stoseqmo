@@ -30,14 +30,17 @@ BIN_DATA_FNS= {
 meth_cmap = {
     "PPMDP": "red",
     "SMUKN": "blue",
-    "CTW": "black"
+    "SM1PF": "teal",
+    "CTW": "black",
+    "PPMDPFull": "green",
 }
 
 def to_nmeth(meth_name):
     return f"Hash{meth_name}"
 def to_amnesia(meth_name):
     return f"Amnesia{meth_name}"
-
+def to_fnv(meth_name):
+    return f"FNVHash{meth_name}"
 def get_style_dict(meth):
     if meth in meth_cmap.keys():
         return {"linestyle": "dashed",
@@ -51,12 +54,14 @@ def get_style_dict(meth):
                 "color": meth_cmap[mname]}
     if meth.startswith("FNVHash"):
         mname = meth[len("FNVHash"):]
-        return {"linestyle": (0, (5,1)), #"densely dashed",
-                "color": meth_cmap[mname]}
-    if meth.startswith("Amnesia"):
-        mname = meth[len("Amnesia"):]
         return {"linestyle": (0, (1,1)), #"densely dotted",
                 "color": meth_cmap[mname]}
+
+    if meth.startswith("Amnesia"):
+        mname = meth[len("Amnesia"):]
+        return {"linestyle": (0, (5,1)), #"densely dashed",
+                "color": meth_cmap[mname]}
+
     else:
         import sys
         print("UNRESOLVED STYLE FOR: " + meth)
