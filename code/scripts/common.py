@@ -17,8 +17,9 @@ from pathlib import Path
 import pandas as pd
 
 
-#GREY= "#B4B4B4"
-GREY="#909090"
+# Lighter Grey
+GREY= "#B4B4B4"
+# GREY="#909090"
 
 
 BIN_DATA_FNS= {
