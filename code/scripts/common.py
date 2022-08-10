@@ -15,7 +15,7 @@ plt.rcParams.update({
 import argparse
 from pathlib import Path
 import pandas as pd
-
+import numpy as np
 
 # Lighter Grey
 GREY= "#B4B4B4"
@@ -28,12 +28,20 @@ BIN_DATA_FNS= {
     # Cantbry
     "kennedy.xls", "ptt5", "sum"}
 
+tolBrightGreen="#228833"
+tolBrightCyan="#66CCEE"
+tolBrightGrey="#BBBBBB"
+tolBrightBlue="#4477AA"
+tolBrightPurple="#AA3377"
+tolBrightRed="#EE6677"
+tolBrightYellow="#CCBB44"
+
 meth_cmap = {
-    "PPMDP": "red",
-    "SMUKN": "blue",
-    "SM1PF": "teal",
-    "CTW": "black",
-    "PPMDPFull": "green",
+    "PPMDP": tolBrightRed,
+    "SMUKN": tolBrightBlue,
+    "SM1PF": tolBrightCyan,
+    "CTW": tolBrightGreen,
+    "PPMDPFull": tolBrightPurple,
 }
 
 def to_nmeth(meth_name):
@@ -72,7 +80,26 @@ def get_style_dict(meth):
         sys.exit(1)
 
 
-def do_plot():
+def do_plot(*,container=None, xlabel=None, ylabel=None, title=None):
+    if container:
+        if not isinstance(container, DemoPlottingItems) and not isinstance(container, LargePlottingItems):
+            print("PANIC")
+            sys.exit(1)
+        ref, leg = container.ax_ar[-1], container.legend_ax
+        handles,labels = ref.get_legend_handles_labels()
+        leg.legend(handles,labels, loc="center")
+        for ax, fn in zip(container.ax_ar, container.fns):
+            ax.set_xscale("log", base=2)
+            if fn in BIN_DATA_FNS:
+                ax.set_facecolor(GREY)
+            ax.set_title(fn)
+        fig = container.fig
+        xlabel = xlabel if xlabel else "Number of Histograms"
+        ylabel = ylabel if ylabel else "Compressed bits/Uncompressed Byte"
+        fig.supxlabel(xlabel)
+        fig.supylabel(ylabel)
+        fig.suptitle(title)
+        fig.tight_layout()
     if _is_interactive():
         plt.show()
     else:
@@ -97,4 +124,88 @@ def get_csv_df(csv_fn):
                              if "proj/thes/" in frame.filename][-1].filename)
     srcdir = caller_file_path.resolve().parent
     csvpath = (srcdir/"../harness")/csv_fn
-    return pd.read_csv(csvpath)
+    df = pd.read_csv(csvpath)
+    # Add b/B
+    df = df.join((df["Entropy"]/df["FSize"]).to_frame(name="b/B"))
+    return df
+
+from dataclasses import dataclass
+from typing import List
+@dataclass
+class DemoPlottingItems:
+    ax_ar: List[mpl.axes.Axes]
+    legend_ax: mpl.axes.Axes
+    fig: mpl.figure.Figure
+    fns: List[str]
+@dataclass
+class LargePlottingItems:
+    ax_ar: List[mpl.axes.Axes]
+    legend_ax: mpl.axes.Axes
+    fig: mpl.figure.Figure
+    fns: List
+def get_demo_items(dataset):
+    shape = (3, 2)
+    fig, axs = plt.subplots(*shape, sharex='col')
+    fig.set_size_inches(6, 7)
+    ax_l = [(0,0),
+            (1,0),
+            (2,0),
+            (0,1),
+            (2,1)]
+    ax_ar = [axs[idx] for idx in ax_l]
+    #scapegoat axis for legend
+    sg_ax = axs[1,1]
+    sg_ax.clear()
+    sg_ax.set_axis_off()
+    if dataset == "calgary":
+        wanted_fns = ["bib", "book1", "obj1", "pic", "progp"]
+    elif dataset == "cantbry":
+        wanted_fns = ["alice29.txt", "kennedy.xls", "sum", "fields.c", "xargs.1"]
+    else:
+        import sys
+        print(f"{dataset} not found")
+        sys.exit(1)
+    return DemoPlottingItems(
+        ax_ar=ax_ar,
+        legend_ax=sg_ax,
+        fig=fig,
+        fns=wanted_fns
+    )
+
+
+
+def get_large_items(dataset):
+    if dataset == "calgary":
+        shape = (3,6)
+        fig, axs = plt.subplots(*shape)
+        plt.subplots_adjust(top=0.88, bottom=0.11, left=0.11,
+                            right=0.9, hspace=0.2, wspace=0.2)
+        fns = ["bib", "book1", "book2", "geo", "news", "obj1", "obj2",
+               "paper1", "paper2", "paper3", "paper4", "paper5",
+               "paper6", "pic", "progc", "progl", "progp", "trans"]
+        legend_ax = axs[2,5]
+    elif dataset == "cantbry":
+        shape = (2,6)
+        fig, axs = plt.subplots(*shape)
+        legend_ax = axs[1,5]
+        legend_ax.clear()
+        legend_ax.set_axis_off()
+        fns = ["alice29.txt", "asyoulik.txt", "cp.html", "fields.c",
+               "grammar.lsp", "kennedy.xls", "lcet10.txt",
+               "plrabn12.txt", "ptt5", "sum", "xargs.1",]
+        coords = np.arange(np.prod(shape)).reshape(*shape)
+        to_coords = lambda idx: (np.where(coords==idx)[0][0], np.where(coords==idx)[1][0])
+    else:
+        import sys
+        print(f"{dataset} not found")
+        sys.exit(1)
+    dpi = fig.get_dpi()
+    fig.set_size_inches(1920/dpi, 1200/dpi)
+    coords = np.arange(np.prod(shape)).reshape(*shape)
+    to_coords = lambda idx: (np.where(coords==idx)[0][0], np.where(coords==idx)[1][0])
+    ax_ar = [axs[to_coords(idx)] for idx in range(len(fns))]
+    return LargePlottingItems(
+        ax_ar=ax_ar,
+        fig=fig,
+        fns=fns,
+        legend_ax=legend_ax)

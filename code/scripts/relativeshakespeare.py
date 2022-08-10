@@ -1,6 +1,5 @@
-from common import plt as plt
 import common
-import numpy as np
+from common import plt as plt
 
 baseline_df = common.get_csv_df("shakespeare.csv")
 for meth in ["CTW","SMUKN", "SM1PF", "PPMDP", "PPMDPFull"]:
