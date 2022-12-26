@@ -36,10 +36,11 @@ HEADERS=$(addprefix $(ROOT)/,$(HEADER_FILES))
 CPPFLAGS=-std=c++17 $(OPTFLAGS) $(WARNFLAGS) $(GCCONLYFLAGS) $(EXTRAWARNFLAGS) $(PTHREADFLAGS) $(ASANFLAGS) -g $(INC) -DROOT_PATH=$(ROOT_IN_QUOTES)
 
 
-# all: correctness
-# 	./correctness
+all:
+runcorrectness: correctness
+	./correctness
 # all: shakespeare.csv
-all: calgary_.csv
+# all: calgary_.csv
 # all: incrementalshakespeare
 # 	./incrementalshakespeare > incrementalshakespeare_other.csv
 

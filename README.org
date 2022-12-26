@@ -1,0 +1,10 @@
+Stochastic Memory for Sequence Models
+
+* Pull Datasets
+#+begin_src bash
+  make -j -C data
+#+end_src
+* Correctness Test
+#+begin_src bash
+  make -C harness runcorrectness
+#+end_src
