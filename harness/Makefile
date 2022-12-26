@@ -8,24 +8,24 @@ GCCONLYFLAGS=-Wlogical-op
 PTHREADFLAGS=-pthread -lpthread
 INC_DIRS= corpus utils coding/ac models harness
 HEADER_FILES=\
-	harness/models.hpp \
-	harness/file_utils.hpp \
-	corpus/corpus.hpp \
-	utils/utils.hpp \
-	utils/data_types.hpp \
 	coding/ac/ac.hpp \
-	models/model_ctx.hpp \
-	models/model_traversals.hpp \
-	models/model_backings.hpp \
-	models/model_mem.hpp \
-	models/model_utils.hpp \
-	models/model_sequence.hpp \
-	models/hashing.hpp \
+	corpus/corpus.hpp \
+	harness/file_utils.hpp \
+	harness/models.hpp \
 	models/hash_methods.hpp \
-	models/ppmdp_params.hpp \
+	models/hashing.hpp \
+	models/model_backings.hpp \
+	models/model_ctx.hpp \
+	models/model_mem.hpp \
+	models/model_sequence.hpp \
+	models/model_traversals.hpp \
+	models/model_utils.hpp \
 	models/ppmdp.hpp \
+	models/ppmdp_params.hpp \
 	models/sequencememoizer.hpp \
 	models/volfctw.hpp
+	utils/data_types.hpp \
+	utils/utils.hpp \
 
 
 
