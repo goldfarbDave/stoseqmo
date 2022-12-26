@@ -15,6 +15,8 @@ HEADER_FILES=\
 	utils/data_types.hpp \
 	coding/ac/ac.hpp \
 	models/model_ctx.hpp \
+	models/model_traversals.hpp \
+	models/model_backings.hpp \
 	models/model_mem.hpp \
 	models/model_utils.hpp \
 	models/model_sequence.hpp \

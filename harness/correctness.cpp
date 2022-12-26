@@ -44,8 +44,22 @@ void correctness_and_entropy_test(ModelCtorT ctor) {
 
 }
 
+#define TEST(...) correctness_and_entropy_test([](){return __VA_ARGS__ ;})
+#define TESTWC(closure, ...) correctness_and_entropy_test([closure](){return __VA_ARGS__ ;})
 int main() {
     limit_gb(3);
+    TEST(CTWModel<ByteAlphabet>(8));
+    TEST(HashSMUKNModel<ByteAlphabet>(20, 1UL << 8));
+    {
+        CoinFlipper cf;
+        TESTWC(&cf, NewHashSMUKNModel<ByteAlphabet>(20, 1UL << 8, cf));
+    }
+    TEST(SMUKNModel<ByteAlphabet>(8));
+    {
+        CoinFlipper cf;
+        TESTWC(&cf, NewSMUKNModel<ByteAlphabet>(8, cf));
+    }
+
     // correctness_and_entropy_test([]() {
     //     return Pure0HashCTWModel<ByteAlphabet>(8, 1UL<<20);
     // });
@@ -55,15 +69,15 @@ int main() {
     // correctness_and_entropy_test([]() {
     //     return Pure2HashCTWModel<ByteAlphabet>(8, 1UL<<20);
     // });
-    correctness_and_entropy_test([]() {
-        return Pure0HashSMUKNModel<ByteAlphabet>(8, 1UL<<20);
-    });
-    correctness_and_entropy_test([]() {
-        return Pure1HashSMUKNModel<ByteAlphabet>(8, 1UL<<20);
-    });
-    correctness_and_entropy_test([]() {
-        return Pure2HashSMUKNModel<ByteAlphabet>(8, 1UL<<20);
-    });
+    // correctness_and_entropy_test([]() {
+    //     return Pure0HashSMUKNModel<ByteAlphabet>(8, 1UL<<20);
+    // });
+    // correctness_and_entropy_test([]() {
+    //     return Pure1HashSMUKNModel<ByteAlphabet>(8, 1UL<<20);
+    // });
+    // correctness_and_entropy_test([]() {
+    //     return Pure2HashSMUKNModel<ByteAlphabet>(8, 1UL<<20);
+    // });
     // correctness_and_entropy_test([]() {
     //     return VolfCTWModel<ByteAlphabet>(8);
     // });

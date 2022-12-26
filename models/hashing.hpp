@@ -63,7 +63,7 @@ public:
 };
 
 
-// Hash table that cllas histogram methods top down, then bottum up
+// Hash table that cllas histogram methods top down, then bottom up
 // Follows semantics of SequenceMemoizer
 template <typename HashLookupT, typename HistogramT>
 class HasherTopDown {
@@ -93,9 +93,7 @@ private:
         ret.reserve(m_depth+1);
         ret.push_back(PathProb{.hash=hashes[0], .parent_prob=Node::get_prior()});
         auto depth = 0;
-        for (auto hash_itr = std::next(hashes.cbegin());
-                                       hash_itr != hashes.cend();
-                                       ++hash_itr) {
+        for (auto hash_itr = std::next(hashes.cbegin()); hash_itr != hashes.cend(); ++hash_itr) {
             ret.push_back(
                 PathProb{.hash=*hash_itr,
                          .parent_prob=lookup(*hash_itr).transform_probs(ret.back().parent_prob, depth++)

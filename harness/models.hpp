@@ -1,6 +1,8 @@
 #pragma once
 #include "model_sequence.hpp"
 #include "volfctw.hpp"
+#include "model_traversals.hpp"
+#include "model_backings.hpp"
 #include "ppmdp.hpp"
 #include "sequencememoizer.hpp"
 #include "hashing.hpp"
@@ -64,10 +66,23 @@ using SMUKNModel = SequenceModel<
         SMUKNHistogram<AlphabetT::size>>,
     AlphabetT>;
 template <typename AlphabetT>
+using NewSMUKNModel = SequenceModel<
+    TopDownTraversal<
+        AdjacencyListBacking<
+            SMUKNHistogram<AlphabetT::size>>>,
+    AlphabetT>;
+template <typename AlphabetT>
 using HashSMUKNModel = SequenceModel<
     HasherTopDown<
         RandomLookup,
         SMUKNHistogram<AlphabetT::size>>,
+    AlphabetT>;
+template <typename AlphabetT>
+using NewHashSMUKNModel = SequenceModel<
+    TopDownTraversal<
+        HashTableBacking<
+            RandomLookup,
+            SMUKNHistogram<AlphabetT::size>>>,
     AlphabetT>;
 template <typename AlphabetT>
 using FNVHashSMUKNModel = SequenceModel<

@@ -6,6 +6,7 @@
 #include "data_types.hpp"
 template <typename DataT>
 struct Context {
+    using T = DataT;
     // End points one past the back
     using ItrT = typename std::vector<DataT>::const_iterator;
     ItrT m_start, m_end;
